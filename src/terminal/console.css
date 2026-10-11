@@ -1,0 +1,216 @@
+/* The console: a single CRT screen filling the viewport, status strip on top,
+ * output in the middle, numbered menu + prompt docked at the bottom. */
+
+.mu-console {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-4) 16px;
+}
+
+.mu-console-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  font: 500 12px/20px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+}
+.mu-console-id {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.mu-console-ctl {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.mu-clock {
+  font-variant-numeric: tabular-nums;
+}
+.mu-toggle {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--phosphor-dim);
+  background: none;
+  border: 1px solid var(--phosphor-dim);
+  border-radius: var(--radius-none);
+  padding: 0 var(--space-2);
+  cursor: pointer;
+}
+.mu-toggle:hover:not(:disabled),
+.mu-toggle[aria-pressed='true'] {
+  background: var(--phosphor-dim);
+  color: var(--on-phosphor);
+}
+.mu-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mu-console-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+}
+.mu-console-out {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--phosphor-faint) transparent;
+  align-content: start;
+}
+.mu-console-block {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.mu-console-dock {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--phosphor-faint);
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Visible auto-complete */
+.mu-suggest {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: var(--measure);
+}
+.mu-suggest-item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--phosphor);
+  font: inherit;
+  line-height: 26px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-shadow: var(--glow-sm);
+  cursor: pointer;
+}
+.mu-suggest-item:hover {
+  background: var(--phosphor);
+  color: var(--on-phosphor);
+  text-shadow: none;
+}
+.mu-suggest-hint {
+  color: var(--phosphor-dim);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.mu-suggest-item:hover .mu-suggest-hint {
+  color: var(--on-phosphor);
+}
+
+.mu-countdown {
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plain CV (hardcopy) */
+.mu-cv {
+  max-width: var(--measure);
+  display: grid;
+  gap: var(--space-4);
+  color: var(--phosphor);
+}
+.mu-cv-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.mu-cv-head p {
+  margin: var(--space-1) 0 0;
+}
+.mu-cv-links a {
+  color: var(--phosphor);
+  text-underline-offset: 3px;
+}
+.mu-cv-summary {
+  display: grid;
+  gap: var(--space-2);
+}
+.mu-cv-summary p {
+  margin: 0;
+}
+.mu-cv h3 {
+  margin: var(--space-4) 0 0;
+  font: 500 12px/20px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+  border-bottom: 1px solid var(--phosphor-faint);
+  padding-bottom: var(--space-1);
+}
+.mu-cv-role {
+  display: grid;
+  gap: var(--space-1);
+}
+.mu-cv-role-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-weight: 600;
+}
+.mu-cv-role-dates {
+  color: var(--phosphor-dim);
+  font-size: 13px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.mu-cv-role ul {
+  margin: 0;
+  padding-left: 2ch;
+  font-size: 15px;
+  line-height: 24px;
+}
+
+@media print {
+  .mu-console-strip,
+  .mu-console-dock {
+    display: none !important;
+  }
+  .mu-console-screen {
+    border: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .mu-console {
+    padding: var(--space-2) var(--space-3);
+  }
+  .mu-console-id span:nth-child(2) {
+    display: none;
+  }
+}

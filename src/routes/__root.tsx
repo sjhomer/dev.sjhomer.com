@@ -1,6 +1,12 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+} from '@tanstack/react-router'
 
 import appCss from '../styles.css?url'
+import { Console } from '../terminal/Console'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -20,24 +26,20 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument() {
   return (
-    // mother (green) is the default palette; the alternate palettes and the
-    // effects toggle are wired in the Atmosphere release.
+    // mother (green) is the default palette; alternates + the effects toggle are
+    // applied imperatively by the console (and a boot-time script, later).
     <html lang="en" data-palette="mother">
       <head>
         <HeadContent />
       </head>
       <body>
-        {children}
-        {import.meta.env.DEV ? <DevTools /> : null}
+        <Console>
+          <Outlet />
+        </Console>
         <Scripts />
       </body>
     </html>
   )
-}
-
-function DevTools() {
-  // Router devtools are dev-only so they never ship in the Cloudflare build.
-  return null
 }
