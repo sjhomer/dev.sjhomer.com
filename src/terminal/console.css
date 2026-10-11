@@ -631,3 +631,109 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* --- Sound gate ----------------------------------------------------------- */
+/* First-load modal: halts the boot behind an opaque phosphor overlay until the
+   visitor opts in or out. The click is also the browser's autoplay unlock. */
+.mu-sound-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--crt-void);
+  background-image: repeating-linear-gradient(
+    var(--scanline) 0 1px,
+    transparent 1px 3px
+  );
+}
+.mu-sound-gate-panel {
+  max-width: 540px;
+  width: 100%;
+  border: 1px solid var(--phosphor-dim);
+  background: var(--crt-panel);
+  box-shadow: var(--bezel);
+  padding: var(--space-5, 32px) var(--space-5, 32px) var(--space-4, 24px);
+  color: var(--phosphor);
+}
+.mu-sound-gate-kicker {
+  margin: 0 0 var(--space-2, 12px);
+  font: 500 11px/16px var(--font-mono);
+  letter-spacing: 0.12em;
+  color: var(--phosphor-dim);
+}
+.mu-sound-gate-title {
+  margin: 0 0 var(--space-3, 16px);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: var(--glow-lg);
+}
+.mu-sound-gate-body {
+  margin: 0 0 var(--space-4, 24px);
+  font: 400 15px/24px var(--font-mono);
+  color: var(--phosphor-dim);
+}
+.mu-sound-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 16px);
+}
+.mu-sound-gate .mu-toggle {
+  height: 40px;
+  padding: 0 var(--space-4, 24px);
+  font-size: 14px;
+}
+.mu-sound-gate-primary {
+  color: var(--on-phosphor);
+  background: var(--phosphor);
+  border-color: var(--phosphor);
+  text-shadow: none;
+}
+.mu-sound-gate-primary:hover:not(:disabled) {
+  background: var(--phosphor);
+  box-shadow: var(--glow-lg);
+}
+
+/* Returning-visitor resume prompt (autoplay was blocked). */
+.mu-sound-resume {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 8px);
+  padding: var(--space-1, 8px);
+  border: 1px solid var(--phosphor-dim);
+  background: var(--crt-panel);
+  box-shadow: var(--glow-sm);
+}
+.mu-sound-resume-x {
+  width: 28px;
+  height: 28px;
+  font: 500 16px/1 var(--font-mono);
+  color: var(--phosphor-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.mu-sound-resume-x:hover {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mu-sound-gate-panel {
+    animation: mu-sound-gate-in 180ms ease-out both;
+  }
+}
+@keyframes mu-sound-gate-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

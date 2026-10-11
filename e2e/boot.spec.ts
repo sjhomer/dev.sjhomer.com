@@ -1,5 +1,19 @@
 import { expect, test } from '@playwright/test'
 
+// The first-load sound gate (client-only) would otherwise overlay these flows;
+// seed a resolved preference so these tests stay focused on boot/navigation.
+// (The no-JS test below makes its own context and needs no seed — the gate never
+// runs without JavaScript.)
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mu-sound', 'off')
+    } catch {
+      /* ignore */
+    }
+  })
+})
+
 test('boot landing renders with banner, menu and prompt', async ({ page }) => {
   await page.goto('/')
   await expect(

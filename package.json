@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "generate:assets": "node scripts/generate-assets.mjs",
+    "generate:sfx": "node scripts/make-sfx.mjs",
     "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-router": "1.170.42",
     "@tanstack/react-start": "1.168.61",
+    "howler": "^2.2.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",
@@ -43,6 +45,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
+    "@types/howler": "^2.2.13",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

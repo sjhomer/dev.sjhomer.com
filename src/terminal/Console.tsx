@@ -11,6 +11,9 @@ import {
 import type { Line } from '../components/muthur'
 import { MENU, complete, resolvePath, suggest } from './queries'
 import { askLines, jonesyLines, rollLines, specialOrderLines } from './eggs'
+import { audio, nextLevel } from './audio'
+import type { SoundLevel } from './audio'
+import { SoundGate } from './SoundGate'
 import './console.css'
 
 /** Query order for mobile swipe navigation. */
@@ -61,6 +64,10 @@ export function Console({
   const [shipDate, setShipDate] = useState('----.--.--')
   const [palette, setPalette] = useState('mother')
   const [fxOff, setFxOff] = useState(false)
+  const [soundLevel, setSoundLevel] = useState<SoundLevel>('off')
+  const [showGate, setShowGate] = useState(false)
+  const [showResume, setShowResume] = useState(false)
+  const [bootKey, setBootKey] = useState(0)
   const [destruct, setDestruct] = useState<number | null>(null)
   const [focused, setFocused] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
@@ -84,6 +91,24 @@ export function Console({
     applyFx(fx)
     setPalette(p)
     setFxOff(fx)
+  }, [])
+
+  // Sound gate (client, once). First visit → the modal halts the boot until the
+  // visitor opts in or out; the choice (the click) is the autoplay-unlock gesture.
+  // Return visit with a remembered choice → no modal; if sound was on, try an
+  // audible boot and fall back to a one-click resume prompt when the browser blocks it.
+  useEffect(() => {
+    if (window.location.pathname === '/cv') return // printable route: no audio
+    const lvl = audio.getLevel()
+    setSoundLevel(lvl)
+    if (!audio.hasPreference()) {
+      setShowGate(true)
+    } else if (lvl !== 'off') {
+      audio
+        .arm()
+        .then(() => audio.playBoot({ onBlocked: () => setShowResume(true) }))
+        .catch(() => setShowResume(true))
+    }
   }, [])
 
   // The hardcopy route forces the print palette; restore on leave.
@@ -263,18 +288,35 @@ export function Console({
     applyPalette(p)
   }
   function cyclePalette() {
-    const order = PALETTES.filter((p) => p !== 'hardcopy')
-    changePalette(
-      order[
-        (order.indexOf(palette as 'mother' | 'sevastopol') + 1) % order.length
-      ],
-    )
+    // Three options now: mother → sevastopol → hardcopy. Hardcopy restyles the
+    // terminal in place (the printable /cv route is a separate command).
+    const i = PALETTES.indexOf(palette as (typeof PALETTES)[number])
+    changePalette(PALETTES[(i + 1) % PALETTES.length])
   }
   function toggleFx() {
     const off = !fxOff
     setFxOff(off)
     store('mu-fx', off ? 'off' : 'on')
     applyFx(off)
+  }
+  // --- Sound -----------------------------------------------------------------
+  function chooseSound(enable: boolean) {
+    const lvl: SoundLevel = enable ? 'full' : 'off'
+    audio.setLevel(lvl)
+    setSoundLevel(lvl)
+    setShowGate(false)
+    setBootKey((k) => k + 1) // replay the boot now the gate is resolved
+    if (enable) void audio.arm().then(() => audio.playBoot())
+  }
+  function resumeSound() {
+    setShowResume(false)
+    void audio.arm().then(() => audio.playBoot())
+  }
+  function cycleVolume() {
+    const lvl = nextLevel(soundLevel)
+    setSoundLevel(lvl)
+    audio.setLevel(lvl)
+    if (lvl !== 'off') void audio.arm().then(() => audio.click()) // audible feedback
   }
 
   function print(echo: string | undefined, lines: Array<Line>) {
@@ -438,14 +480,24 @@ export function Console({
           >
             Effects {fxOff ? 'off' : 'on'}
           </button>
-          <button
-            type="button"
-            className="mu-toggle"
-            aria-pressed={isHardcopy}
-            onClick={() => navigate({ to: isHardcopy ? '/' : '/cv' })}
-          >
-            {isHardcopy ? 'Terminal' : 'Plain CV'}
-          </button>
+          {isHardcopy ? (
+            <button
+              type="button"
+              className="mu-toggle"
+              onClick={() => navigate({ to: '/' })}
+            >
+              Terminal
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="mu-toggle"
+              aria-pressed={soundLevel !== 'off'}
+              onClick={cycleVolume}
+            >
+              Volume: {soundLevel}
+            </button>
+          )}
         </div>
       </div>
 
@@ -491,7 +543,8 @@ export function Console({
                 ) : null}
               </div>
             ) : (
-              children
+              // Keyed so resolving the sound gate remounts and replays the boot.
+              <React.Fragment key={bootKey}>{children}</React.Fragment>
             )}
           </div>
           <span className="mu-scroll-cue" aria-hidden="true">
@@ -592,6 +645,15 @@ export function Console({
           </div>
         ) : null}
       </div>
+
+      {showGate ? <SoundGate mode="choose" onChoose={chooseSound} /> : null}
+      {showResume ? (
+        <SoundGate
+          mode="resume"
+          onResume={resumeSound}
+          onDismissResume={() => setShowResume(false)}
+        />
+      ) : null}
     </section>
   )
 }

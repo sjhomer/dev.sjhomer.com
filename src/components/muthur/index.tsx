@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { audio } from '../../terminal/audio'
 import './muthur.css'
 
 /**
@@ -74,13 +75,19 @@ export function useReveal(
     let raf = 0
     const start = performance.now() + (delay || 0)
     let finished = false
+    let emitted = 0 // last count that emitted a key clack
     const tick = (now: number) => {
       const n = Math.floor((Math.max(0, now - start) * cps) / 1000)
       if (n >= total) {
+        if (total > emitted) audio.click() // final character
         setCount(total)
         finished = true
         doneRef.current?.()
         return
+      }
+      if (n > emitted) {
+        emitted = n
+        audio.click() // one clack per revealed frame (manager throttles)
       }
       setCount(n)
       raf = requestAnimationFrame(tick)
