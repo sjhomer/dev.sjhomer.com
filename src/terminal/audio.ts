@@ -41,6 +41,7 @@ export interface Player {
   stop: () => void
   volume: (v: number) => void
   once: (event: string, fn: () => void) => void
+  off: (event: string, fn?: () => void) => void
 }
 
 export interface AudioDeps {
@@ -97,8 +98,22 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       if (level === 'off') return false
       await arm()
       if (!player) return false
-      if (handlers?.onBlocked) player.once('playerror', handlers.onBlocked)
-      if (handlers?.onPlaying) player.once('play', handlers.onPlaying)
+      // Wire play/playerror as a mutually-cancelling pair: exactly one fires,
+      // and its handler drops the other so no listener lingers on the
+      // long-lived Howl singleton across repeated boots.
+      if (handlers && (handlers.onBlocked || handlers.onPlaying)) {
+        const p = player
+        function onErr(): void {
+          p.off('play', onPlay)
+          handlers?.onBlocked?.()
+        }
+        function onPlay(): void {
+          p.off('playerror', onErr)
+          handlers?.onPlaying?.()
+        }
+        p.once('playerror', onErr)
+        p.once('play', onPlay)
+      }
       player.play('boot')
       return true
     },
@@ -150,8 +165,10 @@ export const audio: AudioManager = createAudioManager({
 })
 
 /**
- * Autoplay feasibility hint for return visits. Uses getAutoplayPolicy where the
- * browser supports it; 'unknown' elsewhere (caller still relies on playerror).
+ * Autoplay feasibility hint for return visits: may we attempt an *audible* boot?
+ * Where the browser exposes getAutoplayPolicy we trust it (only 'allowed' means
+ * audible media may start). Where it doesn't, we stay optimistic and attempt —
+ * the playBoot `onBlocked` (playerror) fallback still catches a real block.
  */
 export function autoplayLikely(): boolean {
   try {
@@ -162,7 +179,7 @@ export function autoplayLikely(): boolean {
       return nav.getAutoplayPolicy('mediaelement') === 'allowed'
     }
   } catch {
-    /* not supported */
+    /* API unavailable — fall through to the optimistic default */
   }
-  return false
+  return true
 }

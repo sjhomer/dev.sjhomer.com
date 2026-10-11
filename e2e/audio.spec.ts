@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 /** Seed a resolved sound preference so the first-load gate is skipped. */
-async function seedSound(page: import('@playwright/test').Page, level: string) {
+async function seedSound(page: Page, level: string) {
   await page.addInitScript((lvl) => {
     try {
-      localStorage.setItem('mu-sound', lvl as string)
+      localStorage.setItem('mu-sound', lvl)
     } catch {
       /* ignore */
     }
@@ -30,6 +31,19 @@ test('first visit shows the sound gate and bypass dismisses it silently', async 
   )
 })
 
+test('pressing Escape on the gate bypasses it silently', async ({ page }) => {
+  await page.goto('/')
+  const dialog = page.getByRole('dialog', { name: /ENABLE INTERFACE AUDIO/i })
+  await expect(dialog).toBeVisible()
+
+  await page.keyboard.press('Escape')
+
+  await expect(dialog).toBeHidden()
+  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe(
+    'off',
+  )
+})
+
 test('choosing the authentic experience records a sound level', async ({
   page,
 }) => {
@@ -44,7 +58,7 @@ test('choosing the authentic experience records a sound level', async ({
 })
 
 /** The ship clock only ticks after client hydration — a reliable interactive signal. */
-async function waitForHydration(page: import('@playwright/test').Page) {
+async function waitForHydration(page: Page) {
   await expect(page.locator('.mu-clock')).not.toContainText('--:--:--')
 }
 
@@ -87,8 +101,5 @@ test('palette button now cycles through hardcopy in place (no /cv nav)', async (
 
   // Restyle happened in place — still on the terminal, not the /cv route.
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.locator('html')).toHaveAttribute(
-    'data-palette',
-    'hardcopy',
-  )
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'hardcopy')
 })

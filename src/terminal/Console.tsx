@@ -11,7 +11,7 @@ import {
 import type { Line } from '../components/muthur'
 import { MENU, complete, resolvePath, suggest } from './queries'
 import { askLines, jonesyLines, rollLines, specialOrderLines } from './eggs'
-import { audio, nextLevel } from './audio'
+import { audio, autoplayLikely, nextLevel } from './audio'
 import type { SoundLevel } from './audio'
 import { SoundGate } from './SoundGate'
 import './console.css'
@@ -104,10 +104,18 @@ export function Console({
     if (!audio.hasPreference()) {
       setShowGate(true)
     } else if (lvl !== 'off') {
-      audio
-        .arm()
-        .then(() => audio.playBoot({ onBlocked: () => setShowResume(true) }))
-        .catch(() => setShowResume(true))
+      // Return visit with sound on: only reach for Howler when the browser's
+      // autoplay policy says an audible start can succeed; otherwise skip the
+      // load and offer a one-click resume. Where no policy API exists we stay
+      // optimistic and let playBoot's playerror fallback catch a real block.
+      if (autoplayLikely()) {
+        audio
+          .arm()
+          .then(() => audio.playBoot({ onBlocked: () => setShowResume(true) }))
+          .catch(() => setShowResume(true))
+      } else {
+        setShowResume(true)
+      }
     }
   }, [])
 
@@ -455,7 +463,7 @@ export function Console({
       className={'mu-console' + (focused ? ' mu-console--focus' : '')}
       aria-label="MU/TH/UR terminal"
     >
-      <div className="mu-console-strip">
+      <div className="mu-console-strip" inert={showGate}>
         <div className="mu-console-id">
           <Link to="/" className="mu-console-home">
             MU/TH/UR 6000
@@ -489,12 +497,7 @@ export function Console({
               Terminal
             </button>
           ) : (
-            <button
-              type="button"
-              className="mu-toggle"
-              aria-pressed={soundLevel !== 'off'}
-              onClick={cycleVolume}
-            >
+            <button type="button" className="mu-toggle" onClick={cycleVolume}>
               Volume: {soundLevel}
             </button>
           )}
@@ -505,6 +508,7 @@ export function Console({
         className="mu-screen mu-screen-flicker mu-console-screen"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
+        inert={showGate}
       >
         <div
           className={

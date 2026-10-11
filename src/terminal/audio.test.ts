@@ -1,14 +1,34 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createAudioManager, levelToVolume, nextLevel } from './audio'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  autoplayLikely,
+  createAudioManager,
+  levelToVolume,
+  nextLevel,
+} from './audio'
 import type { Player } from './audio'
 
 function fakePlayer() {
+  const handlers: Record<string, Array<() => void> | undefined> = {}
   return {
     play: vi.fn<(sprite?: string) => number>(() => 1),
     stop: vi.fn(),
     volume: vi.fn(),
-    once: vi.fn(),
-  } satisfies Player & { play: ReturnType<typeof vi.fn> }
+    once: vi.fn((event: string, fn: () => void) => {
+      ;(handlers[event] ??= []).push(fn)
+    }),
+    off: vi.fn((event: string, fn?: () => void) => {
+      if (!handlers[event]) return
+      handlers[event] = fn ? handlers[event].filter((h) => h !== fn) : []
+    }),
+    /** Fire every listener registered for an event (test helper). */
+    fire: (event: string) => (handlers[event] ?? []).forEach((h) => h()),
+    /** How many listeners are still attached for an event (test helper). */
+    pending: (event: string) => (handlers[event] ?? []).length,
+  } satisfies Player & {
+    play: ReturnType<typeof vi.fn>
+    fire: (event: string) => void
+    pending: (event: string) => number
+  }
 }
 
 function setup(opts: { stored?: string | null; nowSeq?: Array<number> } = {}) {
@@ -118,5 +138,46 @@ describe('audio manager', () => {
     // not armed → nothing to play, must not throw
     expect(() => s.mgr.click()).not.toThrow()
     expect(s.player.play).not.toHaveBeenCalled()
+  })
+
+  it('drops the pending playerror listener once the boot plays', async () => {
+    const s = setup()
+    s.mgr.setLevel('full')
+    await s.mgr.playBoot({ onBlocked: vi.fn() })
+    expect(s.player.pending('playerror')).toBe(1)
+    s.player.fire('play') // success → the stale error listener is removed
+    expect(s.player.pending('playerror')).toBe(0)
+    // Repeated boots must not accumulate listeners on the singleton.
+    await s.mgr.playBoot({ onBlocked: vi.fn() })
+    s.player.fire('play')
+    expect(s.player.pending('playerror')).toBe(0)
+  })
+
+  it('invokes onBlocked and drops the play listener when the boot is blocked', async () => {
+    const s = setup()
+    s.mgr.setLevel('full')
+    const onBlocked = vi.fn()
+    await s.mgr.playBoot({ onBlocked })
+    s.player.fire('playerror')
+    expect(onBlocked).toHaveBeenCalledTimes(1)
+    expect(s.player.pending('play')).toBe(0)
+  })
+})
+
+describe('autoplayLikely', () => {
+  const nav = navigator as Navigator & { getAutoplayPolicy?: unknown }
+  afterEach(() => {
+    delete nav.getAutoplayPolicy
+  })
+
+  it('is optimistic when the policy API is unavailable', () => {
+    expect(autoplayLikely()).toBe(true)
+  })
+
+  it('reflects an explicit autoplay policy when available', () => {
+    nav.getAutoplayPolicy = () => 'allowed'
+    expect(autoplayLikely()).toBe(true)
+    nav.getAutoplayPolicy = () => 'disallowed'
+    expect(autoplayLikely()).toBe(false)
   })
 })
