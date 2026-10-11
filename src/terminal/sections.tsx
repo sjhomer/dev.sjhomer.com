@@ -36,7 +36,9 @@ export function DossierSection(): React.ReactElement {
         value={<Tag tone="caution">{profile.clearance}</Tag>}
       />
       <Divider />
-      <TypeSequence lines={profile.summary.map((text) => ({ text }))} />
+      {profile.summary.map((p, i) => (
+        <Typewriter key={i} text={p} />
+      ))}
       <div className="mu-metrics">
         <Metric value="-40%" label="Infrastructure cost" />
         <Metric value="+50%" label="Engineering productivity with AI" />
@@ -140,7 +142,7 @@ export function ServiceLogSection({
           const newest = e.roles[0]
           const span = `${monthYear(oldest.start)} → ${newest.end ? monthYear(newest.end) : 'PRESENT'}`
           return (
-            <section key={e.key} className="mu-employer">
+            <Staged key={e.key} className="mu-employer">
               <header className="mu-employer-head">
                 <h3 className="mu-employer-name">{e.company}</h3>
                 <p className="mu-employer-meta">
@@ -185,7 +187,7 @@ export function ServiceLogSection({
                   </ul>
                 </article>
               ))}
-            </section>
+            </Staged>
           )
         })
       ) : (
@@ -205,17 +207,13 @@ export function MissionsSection(): React.ReactElement {
       <Typewriter as="h2" variant="display" text="MISSIONS" />
       <Typewriter text="CASE STUDIES ON RECORD" tone="dim" cps={240} />
       {missions.map((m) => (
-        <section
-          key={m.id}
-          className="mu-log"
-          style={{ borderTopStyle: 'dashed' }}
-        >
+        <Staged key={m.id} className="mu-mission">
           <div className="mu-log-meta">
             <span>MISSION · {m.era ?? 'FIELD'}</span>
             {m.metric ? <Tag tone="caution">{m.metric}</Tag> : null}
           </div>
           <h3 className="mu-log-title">{m.title}</h3>
-          <p className="mu-type">{m.brief}</p>
+          <Typewriter text={m.brief} />
           {m.tech.length ? (
             <div className="mu-row">
               {m.tech.map((t) => (
@@ -237,7 +235,7 @@ export function MissionsSection(): React.ReactElement {
               </a>
             </p>
           ) : null}
-        </section>
+        </Staged>
       ))}
       <Divider label="End of file" />
     </Staged>

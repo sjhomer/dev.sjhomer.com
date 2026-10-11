@@ -112,6 +112,61 @@
   pointer-events: none;
 }
 
+/* Scroll affordance: fade the edges and show a cue when content is hidden. */
+.mu-out-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mu-out-wrap > .mu-console-out {
+  flex: 1;
+  min-height: 0;
+}
+.mu-out-wrap::before,
+.mu-out-wrap::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 34px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.mu-out-wrap::before {
+  top: 0;
+  background: linear-gradient(var(--crt-panel), transparent);
+}
+.mu-out-wrap::after {
+  bottom: 0;
+  background: linear-gradient(transparent, var(--crt-panel));
+}
+.mu-out-wrap.more-up::before,
+.mu-out-wrap.more-down::after {
+  opacity: 1;
+}
+.mu-scroll-cue {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  font: 500 11px/16px var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.mu-out-wrap.more-down .mu-scroll-cue {
+  opacity: 1;
+}
+
 .mu-console-dock {
   position: relative;
   z-index: 1;
@@ -254,6 +309,13 @@
   background: var(--phosphor);
   color: var(--on-phosphor);
   border-color: var(--phosphor);
+}
+.mu-mission {
+  display: grid;
+  gap: var(--space-2);
+  max-width: var(--measure);
+  padding-block: var(--space-4);
+  border-top: 1px dashed var(--phosphor-faint);
 }
 .mu-employer {
   display: grid;

@@ -66,6 +66,8 @@ export function Console({
   const [cmdKey, setCmdKey] = useState('⌘ K')
   const [error, setError] = useState('')
   const [eggMode, setEggMode] = useState(false)
+  const [moreUp, setMoreUp] = useState(false)
+  const [moreDown, setMoreDown] = useState(false)
 
   const nextId = useRef(1)
   const hist = useRef<Array<string>>([])
@@ -131,6 +133,36 @@ export function Console({
     delete document.body.dataset.alarm
     setError('')
   }
+
+  // Indicate when there's more content above/below the fold (overlay scrollbars
+  // can hide on macOS), throttled to one check per frame.
+  useEffect(() => {
+    const el = outRef.current
+    if (!el) return undefined
+    let scheduled = false
+    const check = () => {
+      setMoreUp(el.scrollTop > 4)
+      setMoreDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+    }
+    const schedule = () => {
+      if (scheduled) return
+      scheduled = true
+      requestAnimationFrame(() => {
+        scheduled = false
+        check()
+      })
+    }
+    check()
+    const obs = new MutationObserver(schedule)
+    obs.observe(el, { childList: true, subtree: true, characterData: true })
+    el.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      obs.disconnect()
+      el.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [])
 
   // Self-destruct countdown.
   useEffect(() => {
@@ -422,37 +454,49 @@ export function Console({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <div className="mu-screen-body mu-console-out" ref={outRef}>
-          {eggMode ? (
-            <div className="mu-egg">
-              <button
-                type="button"
-                className="mu-reset"
-                onClick={resetTerminal}
-              >
-                ↺ Reset terminal
-              </button>
-              {log.map((b) => (
-                <div key={b.id} className="mu-console-block">
-                  {b.echo ? (
-                    <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
-                  ) : null}
-                  <TypeSequence lines={b.lines} />
-                </div>
-              ))}
-              {destruct != null ? (
-                <Alert title="Emergency destruct">
-                  <p>THE OPTION TO OVERRIDE AUTOMATIC DESTRUCT EXPIRES IN</p>
-                  <p className="mu-countdown">
-                    T-MINUS 00:{String(Math.max(0, destruct)).padStart(2, '0')}
-                  </p>
-                  <p>TYPE OVERRIDE TO ABORT.</p>
-                </Alert>
-              ) : null}
-            </div>
-          ) : (
-            children
-          )}
+        <div
+          className={
+            'mu-out-wrap' +
+            (moreUp ? ' more-up' : '') +
+            (moreDown ? ' more-down' : '')
+          }
+        >
+          <div className="mu-screen-body mu-console-out" ref={outRef}>
+            {eggMode ? (
+              <div className="mu-egg">
+                <button
+                  type="button"
+                  className="mu-reset"
+                  onClick={resetTerminal}
+                >
+                  ↺ Reset terminal
+                </button>
+                {log.map((b) => (
+                  <div key={b.id} className="mu-console-block">
+                    {b.echo ? (
+                      <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
+                    ) : null}
+                    <TypeSequence lines={b.lines} />
+                  </div>
+                ))}
+                {destruct != null ? (
+                  <Alert title="Emergency destruct">
+                    <p>THE OPTION TO OVERRIDE AUTOMATIC DESTRUCT EXPIRES IN</p>
+                    <p className="mu-countdown">
+                      T-MINUS 00:
+                      {String(Math.max(0, destruct)).padStart(2, '0')}
+                    </p>
+                    <p>TYPE OVERRIDE TO ABORT.</p>
+                  </Alert>
+                ) : null}
+              </div>
+            ) : (
+              children
+            )}
+          </div>
+          <span className="mu-scroll-cue" aria-hidden="true">
+            ▾ more below
+          </span>
         </div>
 
         {!isHardcopy ? (

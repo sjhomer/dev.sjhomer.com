@@ -237,20 +237,28 @@ export interface StagedProps {
   /** Pause after a non-typing block before revealing the next (ms). */
   gap?: number
   className?: string
+  /** Called once the whole sequence has printed (lets Staged nest and chain). */
+  onDone?: () => void
 }
 
-function isTyped(child: React.ReactNode): boolean {
+type StagedMarker = { __staged?: boolean }
+
+/** A block that reports its own completion: Typewriter, TypeSequence, or Staged. */
+function isSequenced(
+  child: React.ReactNode,
+): child is React.ReactElement<{ onDone?: () => void }> {
   return (
     React.isValidElement(child) &&
-    (child.type === Typewriter || child.type === TypeSequence)
+    Boolean((child.type as unknown as StagedMarker).__staged)
   )
 }
 
 /**
  * Prints its children one block at a time, top to bottom, like a line printer:
- * a typing block (Typewriter / TypeSequence) must finish before the next appears
- * (so text never prints ahead); a non-typing block (data rows, metrics, groups)
- * is followed by a short pause. Full on SSR / no-JS / reduced motion.
+ * a self-timing block (Typewriter / TypeSequence / nested Staged) must finish
+ * before the next appears (so text never prints ahead); any other block is
+ * followed by a short pause. Full on SSR / no-JS / reduced motion. On restart
+ * (children change, e.g. a filter) it remounts so typed blocks replay.
  */
 export function Staged(
   props: StagedProps & { runKey?: React.Key },
@@ -258,40 +266,50 @@ export function Staged(
   const items = React.Children.toArray(props.children)
   const total = items.length
   const [n, setN] = useState(total)
+  const [gen, setGen] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const started = useRef(false)
+  const prevN = useRef(n)
+  const doneRef = useRef(props.onDone)
+  doneRef.current = props.onDone
   const gap = props.gap ?? 120
 
   const advance = () => setN((x) => Math.min(x + 1, total))
 
-  // Start the sequence (or show everything at once under reduced motion).
+  // Start (or restart) the sequence; remount via `gen` so typed blocks replay.
   useEffect(() => {
-    if (reducedMotion()) {
-      setN(total)
-      return undefined
-    }
-    setN(total > 0 ? 1 : 0)
+    started.current = true
+    setGen((g) => g + 1)
+    setN(reducedMotion() ? total : total > 0 ? 1 : 0)
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
   }, [total, props.runKey])
 
-  // A non-typing active block advances after `gap`; a typing block advances
-  // itself via the injected onDone below.
+  // A non-self-timing active block advances after `gap`.
   useEffect(() => {
     if (reducedMotion() || n <= 0 || n >= total) return undefined
-    if (isTyped(items[n - 1])) return undefined
+    if (isSequenced(items[n - 1])) return undefined
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(advance, gap)
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
-  }, [n, total, gap])
+  }, [n, total, gap, gen])
+
+  // Report completion only when the sequence actually finishes (n crosses to
+  // total via advancing), never on the initial full render.
+  useEffect(() => {
+    const was = prevN.current
+    prevN.current = n
+    if (started.current && total > 0 && n >= total && was < total)
+      doneRef.current?.()
+  }, [n, total])
 
   const shown = items.slice(0, n).map((child, i) => {
-    if (i !== n - 1 || n >= total || !isTyped(child)) return child
-    const el = child as React.ReactElement<{ onDone?: () => void }>
-    const prev = el.props.onDone
-    return React.cloneElement(el, {
+    if (i !== n - 1 || n >= total || !isSequenced(child)) return child
+    const prev = child.props.onDone
+    return React.cloneElement(child, {
       onDone: () => {
         prev?.()
         advance()
@@ -299,8 +317,16 @@ export function Staged(
     })
   })
 
-  return <div className={props.className}>{shown}</div>
+  return (
+    <div key={gen} className={props.className}>
+      {shown}
+    </div>
+  )
 }
+
+;(Typewriter as unknown as StagedMarker).__staged = true
+;(TypeSequence as unknown as StagedMarker).__staged = true
+;(Staged as unknown as StagedMarker).__staged = true
 
 export interface TagProps {
   tone?: Tone
