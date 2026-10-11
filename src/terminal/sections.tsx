@@ -324,6 +324,14 @@ export function TransmitSection(): React.ReactElement {
           }
         />
       ))}
+      <div className="mu-cta-row">
+        <a className="mu-cta" href="/cv">
+          ▸ VIEW CV
+        </a>
+        <a className="mu-cta" href="/sjhomer-resume.pdf" download>
+          ↓ DOWNLOAD RESUME
+        </a>
+      </div>
       <Typewriter text={transmissions.signoff} tone="caution" />
     </Staged>
   )
@@ -349,25 +357,26 @@ function monthYear(ym: string): string {
 }
 
 export function CvSection(): React.ReactElement {
+  const employers = groupByEmployer()
   return (
     <article className="mu-cv">
       <header className="mu-cv-head">
         <h2>{profile.name}</h2>
-        <p>
+        <p className="mu-cv-sub">
           {profile.title} · {profile.station}
         </p>
         <p className="mu-cv-links">
           {transmissions.channels.map((c, i) => (
             <React.Fragment key={c.label}>
-              {i > 0 ? ' · ' : ''}
+              {i > 0 ? '  ·  ' : ''}
               <a href={c.href}>
                 {c.href.replace(/^https?:\/\//, '').replace(/\/$/, '')}
               </a>
             </React.Fragment>
           ))}
         </p>
-        <p className="mu-cv-links">
-          <a href="/sjhomer-resume.pdf" download>
+        <p className="mu-cv-download">
+          <a className="mu-cta" href="/sjhomer-resume.pdf" download>
             ↓ Download PDF
           </a>
         </p>
@@ -380,31 +389,52 @@ export function CvSection(): React.ReactElement {
       </section>
 
       <h3>Experience</h3>
-      {roles.map((r) => (
-        <section key={r.id} className="mu-cv-role">
-          <div className="mu-cv-role-head">
-            <span className="mu-cv-role-title">
-              {r.title}, {r.company}
-              {r.location ? ` · ${r.location}` : ''}
-            </span>
-            <span className="mu-cv-role-dates">
-              {monthYear(r.start)} – {r.end ? monthYear(r.end) : 'Present'}
-            </span>
-          </div>
-          <ul>
-            {r.highlights.map((h, i) => (
-              <li key={i}>{(h.metric ? `${h.metric} ` : '') + h.text}</li>
+      {employers.map((e) => {
+        const oldest = e.roles[e.roles.length - 1]
+        const newest = e.roles[0]
+        return (
+          <section key={e.key} className="mu-cv-emp">
+            <div className="mu-cv-emp-head">
+              <span className="mu-cv-emp-name">
+                {e.company}
+                {e.location ? ` · ${e.location}` : ''}
+              </span>
+              <span className="mu-cv-role-dates">
+                {monthYear(oldest.start)} –{' '}
+                {newest.end ? monthYear(newest.end) : 'Present'}
+              </span>
+            </div>
+            {e.roles.map((r) => (
+              <div key={r.id} className="mu-cv-role">
+                <div className="mu-cv-role-head">
+                  <span className="mu-cv-role-title">{r.title}</span>
+                  <span className="mu-cv-role-dates">
+                    {monthYear(r.start)} –{' '}
+                    {r.end ? monthYear(r.end) : 'Present'}
+                  </span>
+                </div>
+                <ul>
+                  {r.highlights.map((h, i) => (
+                    <li key={i}>{(h.metric ? `${h.metric} ` : '') + h.text}</li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
-        </section>
-      ))}
+          </section>
+        )
+      })}
+
+      <h3>Skills</h3>
+      <ul className="mu-cv-skills">
+        {skills.map((g) => (
+          <li key={g.group}>
+            <strong>{g.group}:</strong> {g.items.join(', ')}
+          </li>
+        ))}
+      </ul>
 
       <h3>Interests</h3>
-      <p>
-        {personal.items
-          .map((s) => s.replace(/^I\s/, '').replace(/^I’m\s/, ''))
-          .join(' ')}
-      </p>
+      <p>{personal.items.join(' ')}</p>
     </article>
   )
 }

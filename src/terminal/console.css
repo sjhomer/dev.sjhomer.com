@@ -386,6 +386,11 @@
   display: grid;
   gap: var(--space-4);
   color: var(--phosphor);
+  padding-bottom: var(--space-6);
+}
+.mu-cv-head {
+  display: grid;
+  gap: var(--space-1);
 }
 .mu-cv-head h2 {
   margin: 0;
@@ -393,10 +398,19 @@
   font-size: 48px;
   line-height: 1;
   font-weight: 400;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
-.mu-cv-head p {
+.mu-cv-sub {
+  margin: 0;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+}
+.mu-cv-links {
   margin: var(--space-1) 0 0;
+  font-size: 14px;
 }
 .mu-cv-links a {
   color: var(--phosphor);
@@ -405,6 +419,7 @@
 .mu-cv-summary {
   display: grid;
   gap: var(--space-2);
+  max-width: var(--measure);
 }
 .mu-cv-summary p {
   margin: 0;
@@ -412,15 +427,35 @@
 .mu-cv h3 {
   margin: var(--space-4) 0 0;
   font: 500 12px/20px var(--font-mono);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--phosphor-dim);
   border-bottom: 1px solid var(--phosphor-faint);
   padding-bottom: var(--space-1);
 }
+.mu-cv-emp {
+  display: grid;
+  gap: var(--space-2);
+  break-inside: avoid;
+}
+.mu-cv-emp-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.mu-cv-emp-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
 .mu-cv-role {
   display: grid;
   gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--phosphor-faint);
+  break-inside: avoid;
 }
 .mu-cv-role-head {
   display: flex;
@@ -438,18 +473,76 @@
 .mu-cv-role ul {
   margin: 0;
   padding-left: 2ch;
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.mu-cv-skills {
+  margin: 0;
+  padding-left: 2ch;
+  display: grid;
+  gap: var(--space-1);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+/* Call-to-action buttons */
+.mu-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.mu-cta {
+  display: inline-block;
+  padding: var(--space-1) var(--space-4);
+  border: 1px solid var(--phosphor);
+  border-radius: var(--radius-none);
+  color: var(--phosphor);
+  font: 500 14px/24px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-shadow: var(--glow-sm);
+}
+.mu-cta:hover {
+  background: var(--phosphor);
+  color: var(--on-phosphor);
+  text-shadow: none;
 }
 
 @media print {
   .mu-console-strip,
-  .mu-console-dock {
+  .mu-console-dock,
+  .mu-scroll-cue,
+  .mu-cv-download {
     display: none !important;
   }
+  /* Let everything flow so the resume paginates instead of clipping to 1 page. */
+  .mu-console,
+  .mu-console-screen,
+  .mu-out-wrap,
+  .mu-console-out,
+  .mu-screen-body {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
   .mu-console-screen {
-    border: 0;
-    box-shadow: none;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .mu-console-screen::before,
+  .mu-console-screen::after,
+  .mu-out-wrap::before,
+  .mu-out-wrap::after {
+    display: none !important;
+  }
+  .mu-cv {
+    max-width: none;
+    padding-bottom: 0;
   }
 }
 
