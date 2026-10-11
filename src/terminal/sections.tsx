@@ -25,7 +25,7 @@ export function DossierSection(): React.ReactElement {
   const head = roles[0]
   return (
     <Staged className="mu-section">
-      <Typewriter as="h2" variant="display" text="DOSSIER" />
+      <Typewriter as="h1" variant="display" text="DOSSIER" />
       <DataRow label="OFFICER" value={profile.displayName} />
       <DataRow label="POST" value={profile.title} />
       <DataRow label="EMPLOYER" value={head.company} />
@@ -119,7 +119,7 @@ export function ServiceLogSection({
 
   return (
     <Staged className="mu-section">
-      <Typewriter as="h2" variant="display" text="SERVICE LOG" />
+      <Typewriter as="h1" variant="display" text="SERVICE LOG" />
       <Typewriter
         text={
           key
@@ -204,7 +204,7 @@ export function ServiceLogSection({
 export function MissionsSection(): React.ReactElement {
   return (
     <Staged className="mu-section">
-      <Typewriter as="h2" variant="display" text="MISSIONS" />
+      <Typewriter as="h1" variant="display" text="MISSIONS" />
       <Typewriter text="CASE STUDIES ON RECORD" tone="dim" cps={240} />
       {missions.map((m) => (
         <Staged key={m.id} className="mu-mission">
@@ -245,7 +245,7 @@ export function MissionsSection(): React.ReactElement {
 export function SystemsSection(): React.ReactElement {
   return (
     <Staged className="mu-section">
-      <Typewriter as="h2" variant="display" text="SYSTEMS" />
+      <Typewriter as="h1" variant="display" text="SYSTEMS" />
       <Typewriter text="CAPABILITIES ON RECORD" tone="dim" cps={240} />
       {skills.map((g) => (
         <div key={g.group} style={{ display: 'grid', gap: 'var(--space-2)' }}>
@@ -266,7 +266,7 @@ export function SystemsSection(): React.ReactElement {
 export function QuartersSection(): React.ReactElement {
   return (
     <Staged className="mu-section">
-      <Typewriter as="h2" variant="display" text="CREW QUARTERS" />
+      <Typewriter as="h1" variant="display" text="CREW QUARTERS" />
       <Typewriter text="OFF-DUTY RECORD" tone="dim" cps={240} />
       <Typewriter text={personal.intro} />
       <TypeSequence
@@ -306,7 +306,7 @@ export function QuartersSection(): React.ReactElement {
 export function TransmitSection(): React.ReactElement {
   return (
     <Staged className="mu-section">
-      <Typewriter as="h2" variant="display" text="TRANSMIT" />
+      <Typewriter as="h1" variant="display" text="TRANSMIT" />
       <Typewriter text="OPENING CHANNEL..." tone="dim" cps={240} />
       {transmissions.channels.map((c) => (
         <DataRow
@@ -361,7 +361,7 @@ export function CvSection(): React.ReactElement {
   return (
     <article className="mu-cv">
       <header className="mu-cv-head">
-        <h2>{profile.name}</h2>
+        <h1>{profile.name}</h1>
         <p className="mu-cv-sub">
           {profile.title} · {profile.station}
         </p>

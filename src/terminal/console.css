@@ -392,7 +392,7 @@
   display: grid;
   gap: var(--space-1);
 }
-.mu-cv-head h2 {
+.mu-cv-head h1 {
   margin: 0;
   font-family: var(--font-display);
   font-size: 48px;
@@ -736,4 +736,27 @@
     opacity: 0;
     transform: translateY(6px);
   }
+}
+
+/* Skip link — visually hidden until focused, then a phosphor chip top-left. */
+.mu-skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -3rem;
+  z-index: 60;
+  padding: var(--space-1) var(--space-2);
+  background: var(--phosphor);
+  color: var(--void);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: top 0.15s ease;
+}
+.mu-skip-link:focus {
+  top: var(--space-2);
+}
+/* Programmatic focus target (skip link) — no persistent outline halo. */
+.mu-console-out:focus {
+  outline: none;
 }

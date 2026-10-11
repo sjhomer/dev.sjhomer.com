@@ -37,14 +37,24 @@ function reducedMotion(): boolean {
   }
 }
 
-/** Reads a cadence token from tokens.css, falling back to the documented default. */
+/**
+ * Reads a cadence token from tokens.css, falling back to the documented default.
+ * The token values are static, so the first successful read is memoised — this
+ * keeps the typing hot path (every Typewriter mount / line completion) from
+ * triggering a fresh getComputedStyle forced style-recalc each time.
+ */
+const cadenceCache = new Map<string, number>()
 export function cadence(name: string, fallback: number): number {
+  const cached = cadenceCache.get(name)
+  if (cached !== undefined) return cached
   try {
     const v = getComputedStyle(document.documentElement)
       .getPropertyValue('--' + name)
       .trim()
     const n = parseFloat(v)
-    return isNaN(n) ? fallback : n
+    const result = isNaN(n) ? fallback : n
+    cadenceCache.set(name, result)
+    return result
   } catch {
     return fallback
   }
@@ -456,7 +466,8 @@ export function Prompt(props: PromptProps): React.ReactElement {
   const [focused, setFocused] = useState(false)
   const controlled = props.value != null
   const value = controlled ? props.value! : own
-  const idRef = useRef('mu-prompt-' + Math.random().toString(36).slice(2, 8))
+  // useId gives a stable id across SSR and hydration (Math.random did not).
+  const id = React.useId()
   function change(e: React.ChangeEvent<HTMLInputElement>) {
     if (!controlled) setOwn(e.target.value)
     props.onChange?.(e.target.value)
@@ -470,7 +481,7 @@ export function Prompt(props: PromptProps): React.ReactElement {
   }
   return (
     <form className={cx('mu-prompt', props.className)} onSubmit={submit}>
-      <label className="mu-sr" htmlFor={idRef.current}>
+      <label className="mu-sr" htmlFor={id}>
         {props.label || 'Command'}
       </label>
       <span className="mu-prompt-prefix" aria-hidden="true">
@@ -490,7 +501,7 @@ export function Prompt(props: PromptProps): React.ReactElement {
           ) : null}
         </span>
         <input
-          id={idRef.current}
+          id={id}
           className="mu-prompt-input"
           value={value}
           onChange={change}

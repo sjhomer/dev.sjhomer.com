@@ -49,6 +49,37 @@ function store(key: string, value?: string): string | null {
   }
 }
 
+/**
+ * Ship clock + date. Isolated in its own component so its per-second state
+ * update re-renders only these two spans, not the whole Console shell (menu,
+ * prompt, suggestions). Values are placeholders until the client ticks.
+ */
+function ShipClock(): React.ReactElement {
+  const [clock, setClock] = useState('--:--:--')
+  const [shipDate, setShipDate] = useState('----.--.--')
+  useEffect(() => {
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const tick = () => {
+      const d = new Date()
+      setClock(
+        [d.getHours(), d.getMinutes(), d.getSeconds()].map(pad).join(':'),
+      )
+      setShipDate(
+        `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`,
+      )
+    }
+    tick()
+    const t = setInterval(tick, 1000)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <>
+      <span>Nostromo · {shipDate}</span>
+      <span className="mu-clock">SHIP TIME {clock}</span>
+    </>
+  )
+}
+
 export function Console({
   children,
 }: {
@@ -60,14 +91,13 @@ export function Console({
 
   const [value, setValue] = useState('')
   const [log, setLog] = useState<Array<Block>>([])
-  const [clock, setClock] = useState('--:--:--')
-  const [shipDate, setShipDate] = useState('----.--.--')
   const [palette, setPalette] = useState('mother')
   const [fxOff, setFxOff] = useState(false)
   const [soundLevel, setSoundLevel] = useState<SoundLevel>('off')
   const [showGate, setShowGate] = useState(false)
   const [showResume, setShowResume] = useState(false)
   const [bootKey, setBootKey] = useState(0)
+  const [routeAnnounce, setRouteAnnounce] = useState('')
   const [destruct, setDestruct] = useState<number | null>(null)
   const [focused, setFocused] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
@@ -77,6 +107,7 @@ export function Console({
   const [moreDown, setMoreDown] = useState(false)
 
   const nextId = useRef(1)
+  const firstRoute = useRef(true)
   const hist = useRef<Array<string>>([])
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -128,42 +159,30 @@ export function Console({
     }
   }, [isHardcopy, palette])
 
-  // Ship clock + date (client only; rolls over at midnight).
-  useEffect(() => {
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const tick = () => {
-      const d = new Date()
-      setClock(
-        [d.getHours(), d.getMinutes(), d.getSeconds()].map(pad).join(':'),
-      )
-      setShipDate(
-        `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`,
-      )
-    }
-    tick()
-    const t = setInterval(tick, 1000)
-    return () => clearInterval(t)
-  }, [])
-
   // Navigating anywhere exits easter-egg mode and reloads the static content
   // fresh (with its animations), scrolled to the top.
   useEffect(() => {
     setEggMode(false)
     setLog([])
     setDestruct(null)
-    try {
-      delete document.body.dataset.alarm
-    } catch {
-      /* no document */
-    }
     outRef.current?.scrollTo({ top: 0 })
+    // Announce the new view to assistive tech (SPA nav is otherwise silent).
+    // Skip the initial mount so first load isn't announced.
+    if (firstRoute.current) {
+      firstRoute.current = false
+    } else {
+      const name =
+        pathname === '/'
+          ? 'Terminal home'
+          : pathname.slice(1).replace(/[-/]/g, ' ')
+      setRouteAnnounce(name.toUpperCase() + ' LOADED')
+    }
   }, [pathname])
 
   function resetTerminal() {
     setEggMode(false)
     setLog([])
     setDestruct(null)
-    delete document.body.dataset.alarm
     setError('')
   }
 
@@ -186,8 +205,13 @@ export function Console({
       })
     }
     check()
+    // Watch structural changes (blocks/lines mounting) but NOT characterData:
+    // the typing animation mutates a text node every frame, and reading scroll
+    // metrics in check() forces a layout reflow — doing that per character is
+    // continuous thrash on the animation path. Line-by-line growth still fires
+    // via childList, and scroll/resize cover the rest.
     const obs = new MutationObserver(schedule)
-    obs.observe(el, { childList: true, subtree: true, characterData: true })
+    obs.observe(el, { childList: true, subtree: true })
     el.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
     return () => {
@@ -201,7 +225,6 @@ export function Console({
   useEffect(() => {
     if (destruct == null) return undefined
     if (destruct <= 0) {
-      delete document.body.dataset.alarm
       print(undefined, [
         {
           text: 'DETONATION SIMULATED. THIS IS A PORTFOLIO, NOT A STARSHIP.',
@@ -385,7 +408,6 @@ export function Console({
     }
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
       setEggMode(true)
-      document.body.dataset.alarm = ''
       setDestruct(10)
       print(cmd, [
         {
@@ -398,7 +420,6 @@ export function Console({
     if (cmd === 'OVERRIDE') {
       setEggMode(true)
       if (destruct != null) {
-        delete document.body.dataset.alarm
         setDestruct(null)
         print(cmd, [
           {
@@ -463,13 +484,18 @@ export function Console({
       className={'mu-console' + (focused ? ' mu-console--focus' : '')}
       aria-label="MU/TH/UR terminal"
     >
+      <a className="mu-skip-link" href="#mu-main">
+        Skip to content
+      </a>
+      <p className="mu-sr" role="status" aria-live="polite">
+        {routeAnnounce}
+      </p>
       <div className="mu-console-strip" inert={showGate}>
         <div className="mu-console-id">
           <Link to="/" className="mu-console-home">
             MU/TH/UR 6000
           </Link>
-          <span>Nostromo · {shipDate}</span>
-          <span className="mu-clock">SHIP TIME {clock}</span>
+          <ShipClock />
         </div>
         <div className="mu-console-ctl">
           <button
@@ -517,7 +543,13 @@ export function Console({
             (moreDown ? ' more-down' : '')
           }
         >
-          <div className="mu-screen-body mu-console-out" ref={outRef}>
+          <div
+            className="mu-screen-body mu-console-out"
+            id="mu-main"
+            role="main"
+            tabIndex={-1}
+            ref={outRef}
+          >
             {eggMode ? (
               <div className="mu-egg">
                 <button
@@ -538,7 +570,9 @@ export function Console({
                 {destruct != null ? (
                   <Alert title="Emergency destruct">
                     <p>THE OPTION TO OVERRIDE AUTOMATIC DESTRUCT EXPIRES IN</p>
-                    <p className="mu-countdown">
+                    {/* aria-hidden: the per-second tick must not re-fire the
+                        assertive role=alert announcement on every change. */}
+                    <p className="mu-countdown" aria-hidden="true">
                       T-MINUS 00:
                       {String(Math.max(0, destruct)).padStart(2, '0')}
                     </p>
@@ -589,8 +623,12 @@ export function Console({
                           type="button"
                           className="mu-suggest-item"
                           data-group={q.group}
-                          onMouseDown={(e) => {
-                            e.preventDefault()
+                          // preventDefault on mousedown keeps the input focused
+                          // (so the panel doesn't close before activation);
+                          // onClick fires for both pointer and keyboard
+                          // (Enter/Space), so the item is keyboard-operable.
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
                             run(q.name)
                             setValue('')
                             inputRef.current?.blur()
