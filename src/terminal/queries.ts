@@ -144,9 +144,13 @@ const EMPLOYERS: Array<{ key: string; label: string }> = [
   { key: 'STEELSERIES', label: 'SteelSeries' },
 ]
 
-/** Every command the visible auto-complete offers, grouped for discovery. */
+/**
+ * Every command the visible auto-complete offers, grouped for discovery.
+ * CV, ASK and DOWNLOAD are intentionally left out of the visible list (CV is
+ * off-menu; ASK/DOWNLOAD stay runnable by typing) to keep the menu focused.
+ */
 const SUGGESTABLE: Array<Suggestion> = [
-  ...QUERIES.map((q) => ({
+  ...QUERIES.filter((q) => !q.offMenu).map((q) => ({
     name: q.name,
     hint: q.hint,
     group: 'query' as const,
@@ -156,8 +160,6 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: `service log — ${e.label}`,
     group: 'log' as const,
   })),
-  { name: 'ASK', hint: 'ask MOTHER a question', group: 'command' },
-  { name: 'DOWNLOAD', hint: 'download the resume PDF', group: 'command' },
   {
     name: 'SPECIAL ORDER 937',
     hint: 'science officer eyes only',

@@ -63,17 +63,50 @@ test('Transmit does not scroll sideways on a phone', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0)
 })
 
-test('per-employer log filters are hidden from the mobile suggestions', async ({
+test('the text prompt is replaced by a tap-to-pick button on mobile', async ({
   page,
 }) => {
   await seedSound(page, 'off')
   await page.goto('/')
   await waitForHydration(page)
 
-  const input = page.getByRole('textbox', { name: /Query MOTHER/i })
-  await input.click()
-  await input.fill('LOG')
-  // Any visible suggestion item must not be a log-group (per-employer) filter.
-  const logItems = page.locator('.mu-suggest-item[data-group="log"]:visible')
-  await expect(logItems).toHaveCount(0)
+  await expect(
+    page.getByRole('textbox', { name: /Query MOTHER/i }),
+  ).toBeHidden()
+  await expect(
+    page.getByRole('button', { name: /Select a command/i }),
+  ).toBeVisible()
+})
+
+test('tapping the picker opens the list and a command navigates', async ({
+  page,
+}) => {
+  await seedSound(page, 'off')
+  await page.goto('/')
+  await waitForHydration(page)
+
+  await page.getByRole('button', { name: /Select a command/i }).click()
+  const missions = page.locator('.mu-suggest-item', { hasText: 'MISSIONS' })
+  await expect(missions).toBeVisible()
+  await missions.click()
+  await expect(page).toHaveURL(/\/missions$/)
+})
+
+test('the picker omits CV / ASK / DOWNLOAD and the log filters', async ({
+  page,
+}) => {
+  await seedSound(page, 'off')
+  await page.goto('/')
+  await waitForHydration(page)
+
+  await page.getByRole('button', { name: /Select a command/i }).click()
+  await expect(
+    page.locator('.mu-suggest-item[data-group="log"]:visible'),
+  ).toHaveCount(0)
+  const names = await page
+    .locator('.mu-suggest-item:visible .mu-suggest-name')
+    .allInnerTexts()
+  expect(names).not.toContain('CV')
+  expect(names).not.toContain('ASK')
+  expect(names).not.toContain('DOWNLOAD')
 })

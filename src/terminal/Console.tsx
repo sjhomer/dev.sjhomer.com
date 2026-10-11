@@ -90,6 +90,8 @@ export function Console({
   const [routeAnnounce, setRouteAnnounce] = useState('')
   const [destruct, setDestruct] = useState<number | null>(null)
   const [focused, setFocused] = useState(false)
+  // Mobile: the prompt is a button that opens the command picker (no typing).
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
   const [error, setError] = useState('')
   const [eggMode, setEggMode] = useState(false)
@@ -154,6 +156,7 @@ export function Console({
     setEggMode(false)
     setLog([])
     setDestruct(null)
+    setPickerOpen(false)
     outRef.current?.scrollTo({ top: 0 })
     // Announce the new view to assistive tech (SPA nav is otherwise silent).
     // Skip the initial mount so first load isn't announced.
@@ -447,7 +450,10 @@ export function Console({
     }
   }
 
-  const suggestions = focused || value.trim() ? suggest(value) : []
+  // Show the command list when the desktop input is focused/filtering, or when
+  // the mobile picker button has been tapped (mobile has no text input).
+  const suggestions =
+    focused || value.trim() || pickerOpen ? suggest(value) : []
   // Mobile pager targets (the numbered menu is hidden on phones). Landing sits
   // before the first page: prev → Transmit, next → Dossier.
   const pager = pageNav(pathname)
@@ -586,7 +592,13 @@ export function Console({
 
               {suggestions.length ? (
                 <div className="mu-suggest-panel" aria-label="Commands">
-                  <p className="mu-suggest-head">COMMANDS — TYPE TO FILTER</p>
+                  <p className="mu-suggest-head">
+                    COMMANDS
+                    <span className="mu-suggest-head-filter">
+                      {' '}
+                      — TYPE TO FILTER
+                    </span>
+                  </p>
                   <ul className="mu-suggest">
                     {suggestions.map((q) => (
                       <li key={q.name}>
@@ -602,6 +614,7 @@ export function Console({
                           onClick={() => {
                             run(q.name)
                             setValue('')
+                            setPickerOpen(false)
                             inputRef.current?.blur()
                           }}
                         >
@@ -636,6 +649,22 @@ export function Console({
               placeholder="Type a query, or a command"
               label="Query MOTHER"
             />
+            <button
+              type="button"
+              className="mu-prompt-mobile"
+              onClick={() => setPickerOpen((o) => !o)}
+              aria-expanded={pickerOpen}
+            >
+              <span className="mu-prompt-mobile-prefix" aria-hidden="true">
+                &gt;
+              </span>
+              <span className="mu-prompt-mobile-label">
+                Tap to Select a Command
+              </span>
+              <span className="mu-prompt-mobile-caret" aria-hidden="true">
+                {pickerOpen ? '▴' : '▾'}
+              </span>
+            </button>
             {error ? (
               <p className="mu-prompt-error" role="alert">
                 {error}
