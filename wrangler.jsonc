@@ -4,10 +4,11 @@
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
-  // Interim home until the dev.sjhomer.com cutover: the *.workers.dev URL is
-  // our live/preview environment, and per-version Preview URLs are on.
+  // Production is the custom domain; the *.workers.dev URL stays on as a
+  // fallback, and per-version Preview URLs are used by PRs.
   "workers_dev": true,
   "preview_urls": true,
+  "routes": [{ "pattern": "dev.sjhomer.com", "custom_domain": true }],
   "observability": {
     "enabled": true,
   },

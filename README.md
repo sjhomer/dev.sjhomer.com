@@ -72,10 +72,11 @@ The deploy step is **gated on two GitHub Actions secrets** you add once:
    - `CLOUDFLARE_ACCOUNT_ID`
 
 Until those exist the `verify` job still runs; only the `deploy` job needs them.
-The Worker is named `dev-sjhomer-com` (see `wrangler.jsonc`) and serves at its
-`*.workers.dev` URL. The `dev.sjhomer.com` custom domain is pointed at the
-Worker **after phase 2**, once the terminal and `/cv` reach parity with the
-legacy page (the roadmap's "domain cutover").
+The Worker is named `dev-sjhomer-com` (see `wrangler.jsonc`). **Production is
+`https://dev.sjhomer.com`** — a Cloudflare Workers custom domain (`routes` in
+`wrangler.jsonc`); the `dev-sjhomer-com.*.workers.dev` URL stays on as a
+fallback, and PRs get their own per-version Preview URL. (The domain cutover
+from the legacy Vercel site was brought forward ahead of the roadmap.)
 
 ## Design sources
 
