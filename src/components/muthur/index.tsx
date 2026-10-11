@@ -234,14 +234,23 @@ export function TypeSequence(props: TypeSequenceProps): React.ReactElement {
 
 export interface StagedProps {
   children: React.ReactNode
-  /** ms between each child appearing. */
+  /** Pause after a non-typing block before revealing the next (ms). */
   gap?: number
   className?: string
 }
+
+function isTyped(child: React.ReactNode): boolean {
+  return (
+    React.isValidElement(child) &&
+    (child.type === Typewriter || child.type === TypeSequence)
+  )
+}
+
 /**
- * Reveals its children one at a time, top to bottom (each then types on its own).
- * Full on SSR / no-JS / reduced motion; cascades on the client. Re-runs when
- * `runKey` changes (e.g. a route change) so each page loads in from the top.
+ * Prints its children one block at a time, top to bottom, like a line printer:
+ * a typing block (Typewriter / TypeSequence) must finish before the next appears
+ * (so text never prints ahead); a non-typing block (data rows, metrics, groups)
+ * is followed by a short pause. Full on SSR / no-JS / reduced motion.
  */
 export function Staged(
   props: StagedProps & { runKey?: React.Key },
@@ -249,23 +258,48 @@ export function Staged(
   const items = React.Children.toArray(props.children)
   const total = items.length
   const [n, setN] = useState(total)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const gap = props.gap ?? 120
+
+  const advance = () => setN((x) => Math.min(x + 1, total))
+
+  // Start the sequence (or show everything at once under reduced motion).
   useEffect(() => {
     if (reducedMotion()) {
       setN(total)
       return undefined
     }
-    setN(0)
-    let i = 0
-    let t: ReturnType<typeof setTimeout>
-    const step = () => {
-      i += 1
-      setN(i)
-      if (i < total) t = setTimeout(step, props.gap ?? 150)
+    setN(total > 0 ? 1 : 0)
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
     }
-    t = setTimeout(step, props.gap ?? 150)
-    return () => clearTimeout(t)
-  }, [total, props.gap, props.runKey])
-  return <div className={props.className}>{items.slice(0, n)}</div>
+  }, [total, props.runKey])
+
+  // A non-typing active block advances after `gap`; a typing block advances
+  // itself via the injected onDone below.
+  useEffect(() => {
+    if (reducedMotion() || n <= 0 || n >= total) return undefined
+    if (isTyped(items[n - 1])) return undefined
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(advance, gap)
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
+    }
+  }, [n, total, gap])
+
+  const shown = items.slice(0, n).map((child, i) => {
+    if (i !== n - 1 || n >= total || !isTyped(child)) return child
+    const el = child as React.ReactElement<{ onDone?: () => void }>
+    const prev = el.props.onDone
+    return React.cloneElement(el, {
+      onDone: () => {
+        prev?.()
+        advance()
+      },
+    })
+  })
+
+  return <div className={props.className}>{shown}</div>
 }
 
 export interface TagProps {

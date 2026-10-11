@@ -18,7 +18,7 @@ function BootBars(): React.ReactElement {
     const start = performance.now()
     let raf = 0
     const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / 900)
+      const t = Math.min(1, (now - start) / 550)
       setV(t)
       if (t < 1) raf = requestAnimationFrame(tick)
     }
@@ -36,7 +36,7 @@ function BootBars(): React.ReactElement {
 
 export function BootLanding(): React.ReactElement {
   return (
-    <Staged className="mu-boot" gap={280}>
+    <Staged className="mu-boot" gap={620}>
       <Typewriter
         text="INTERFACE 2037 READY FOR INQUIRY"
         tone="dim"
