@@ -18,6 +18,13 @@ const KEYS = ['key1', 'key2', 'key3'] as const
 const CLICK_THROTTLE_MS = 40
 const STORE_KEY = 'mu-sound'
 
+/**
+ * Per-sprite gain for the typing clacks, relative to the base level. The boot
+ * cue and the "system online" chime play at the full level; the per-character
+ * text-rendering clack is deliberately softer so continuous typing stays gentle.
+ */
+export const KEY_GAIN = 0.5
+
 /** Level → Howler volume (0..1). 'on' is deliberately gentle (full was too loud). */
 export function levelToVolume(level: SoundLevel): number {
   return level === 'on' ? 0.35 : 0
@@ -43,7 +50,10 @@ function normalizeLevel(v: unknown): SoundLevel | null {
 export interface Player {
   play: (sprite?: string) => number
   stop: () => void
-  volume: (v: number) => void
+  /** Group volume, or a single sound's volume when an id is given. */
+  volume: (v: number, id?: number) => void
+  /** Playback rate for a single sound (pitch + speed), given its id. */
+  rate: (r: number, id?: number) => void
   once: (event: string, fn: () => void) => void
   off: (event: string, fn?: () => void) => void
 }
@@ -71,6 +81,13 @@ export interface AudioManager {
   playBoot: (handlers?: BootHandlers) => Promise<boolean>
   /** Play a throttled key clack if armed + audible. Safe to call anytime. */
   click: () => void
+  /**
+   * Play one self-destruct countdown tick if armed + audible. `rise` in [0,1]
+   * (0 at the top of the count, →1 near zero) raises the pitch as it climbs.
+   */
+  countdown: (rise: number) => void
+  /** Play the pleasant all-clear chime if armed + audible (safe resolution). */
+  allClear: () => void
 }
 
 export function createAudioManager(deps: AudioDeps): AudioManager {
@@ -126,7 +143,23 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       const t = deps.now()
       if (t - lastClick < CLICK_THROTTLE_MS) return
       lastClick = t
-      player.play(KEYS[Math.floor(Math.random() * KEYS.length)])
+      const id = player.play(KEYS[Math.floor(Math.random() * KEYS.length)])
+      // Turn this clack's own sound id down so typing stays soft while the boot
+      // cue and chime keep the full level.
+      player.volume(levelToVolume(level) * KEY_GAIN, id)
+    },
+    countdown(rise: number) {
+      if (!player || level === 'off') return
+      const id = player.play('countdown')
+      player.volume(levelToVolume(level), id)
+      // rise 0→1 maps to playback rate 1.0→1.9, so the pitch climbs toward zero.
+      const r = 1 + Math.max(0, Math.min(1, rise)) * 0.9
+      player.rate(r, id)
+    },
+    allClear() {
+      if (!player || level === 'off') return
+      const id = player.play('allclear')
+      player.volume(levelToVolume(level), id)
     },
   }
 }

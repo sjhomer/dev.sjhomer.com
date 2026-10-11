@@ -119,6 +119,48 @@ function keyBeep(seed, freq) {
   return out
 }
 
+/**
+ * One self-destruct countdown tick — a clean bright blip. The runtime plays it
+ * once per second at a rising playback rate, so the pitch climbs as T-minus
+ * falls toward zero. ~90 ms, fast attack, quick decay.
+ */
+function countdownTick() {
+  const dur = 0.09
+  const n = ms(dur * 1000)
+  const out = new Float32Array(n)
+  const f = 660
+  for (let i = 0; i < n; i++) {
+    const t = i / SR
+    const env = Math.min(1, t / 0.002) * decay(t, 0.03)
+    out[i] = square(2 * Math.PI * f * t) * 0.5 * env
+  }
+  return out
+}
+
+/**
+ * All-clear chime — a soft, pleasant major resolution for when the self-destruct
+ * ends safely (the simulated-detonation reveal, or an OVERRIDE abort). A warm
+ * C-major bloom (C5+E5+G5) with a slow swell, distinct from the boot chime.
+ */
+function allClear() {
+  const dur = 0.8
+  const n = ms(dur * 1000)
+  const out = new Float32Array(n)
+  const chord = [523.25, 659.25, 783.99] // C5 E5 G5
+  for (let i = 0; i < n; i++) {
+    const t = i / SR
+    const swell = Math.sin(Math.PI * Math.min(1, t / 0.7)) // gentle rise + fall
+    let s = 0
+    for (const f of chord) {
+      s += Math.sin(2 * Math.PI * f * t) + Math.sin(4 * Math.PI * f * t) * 0.12
+    }
+    s /= chord.length
+    const atk = Math.min(1, t / 0.02)
+    out[i] = s * 0.5 * swell * atk
+  }
+  return out
+}
+
 /** Normalise to a safe peak so nothing clips after summing. */
 function normalise(buf, peak = 0.92) {
   let max = 0
@@ -177,6 +219,8 @@ const { buf, sprite } = pack([
   { name: 'key1', samples: keyBeep(0x1111, 1180) },
   { name: 'key2', samples: keyBeep(0x2222, 1480) },
   { name: 'key3', samples: keyBeep(0x3333, 1650) },
+  { name: 'countdown', samples: countdownTick() },
+  { name: 'allclear', samples: allClear() },
 ])
 
 await mkdir(resolve(root, 'public/audio'), { recursive: true })

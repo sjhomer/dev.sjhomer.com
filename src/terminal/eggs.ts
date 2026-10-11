@@ -137,10 +137,15 @@ export function specialOrderLines(): Array<Line> {
     },
     { text: 'PRIORITY ONE: INSURE RETURN OF ORGANISM FOR ANALYSIS.', cps: 60 },
     { text: 'ALL OTHER CONSIDERATIONS SECONDARY.', cps: 60, pause: 600 },
+    // "CREW EXPENDABLE." prints in alert, the cursor hangs, then it is
+    // backspace-deleted and amended by the officer to CREW ESSENTIAL.
     {
-      text: 'CREW EXPENDABLE —— AMENDED: CREW ESSENTIAL.',
-      tone: 'caution',
-      cps: 40,
+      text: 'CREW EXPENDABLE.',
+      tone: 'alert',
+      cps: 30,
+      hold: 2200,
+      morphTo: 'CREW ESSENTIAL. AMENDED BY HEAD OF ENGINEERING.',
+      morphTone: 'caution',
     },
   ]
 }

@@ -178,6 +178,33 @@
 .mu-out-wrap.more-down .mu-scroll-cue {
   opacity: 1;
 }
+/* While reading-paced auto-scroll runs, the AUTO-READ badge replaces the
+ * "more below" cue; it sits bottom-right and blinks to read as "in motion". */
+.mu-out-wrap.auto-reading .mu-scroll-cue {
+  opacity: 0;
+}
+.mu-autoread {
+  position: absolute;
+  right: var(--space-3);
+  bottom: 2px;
+  z-index: 3;
+  pointer-events: none;
+  font: 500 11px/16px var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--caution);
+  text-shadow: var(--glow-sm);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mu-autoread {
+    animation: mu-autoread-blink 1.1s steps(1) infinite;
+  }
+}
+@keyframes mu-autoread-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
 
 .mu-console-dock {
   position: relative;
@@ -526,6 +553,7 @@
   .mu-cv-bar,
   .mu-console-dock,
   .mu-scroll-cue,
+  .mu-autoread,
   .mu-cv-download {
     display: none !important;
   }

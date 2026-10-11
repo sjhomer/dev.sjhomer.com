@@ -17,6 +17,16 @@ export interface Line {
   variant?: 'display'
   cps?: number
   pause?: number
+  /**
+   * When set, the line animates in two acts: it types `text`, the cursor hangs
+   * for `hold` ms, then the text is backspace-deleted character by character and
+   * `morphTo` is typed in its place (in `morphTone`). Used for the SPECIAL ORDER
+   * 937 reveal, where "CREW EXPENDABLE." is deleted and amended to the officer's
+   * alternate label.
+   */
+  morphTo?: string
+  morphTone?: Tone
+  hold?: number
 }
 
 function cx(...parts: Array<string | false | null | undefined>): string {
@@ -181,6 +191,96 @@ export function Typewriter(props: TypewriterProps): React.ReactElement {
   )
 }
 
+export interface MorphLineProps {
+  text: string
+  morphTo: string
+  tone?: Tone
+  morphTone?: Tone
+  variant?: 'display'
+  hold?: number
+  runKey?: React.Key
+  onDone?: () => void
+}
+/**
+ * A two-act line: type `text`, hold, backspace-delete it, then type `morphTo`.
+ * The accessible name is the final `morphTo` (the amended, true value); the
+ * transient first act is visual only. Honors reduced motion by showing `morphTo`
+ * at once. Emits key clacks through the shared audio manager (throttled there).
+ */
+export function MorphLine(props: MorphLineProps): React.ReactElement {
+  const { text, morphTo } = props
+  const TYPE_CPS = 30
+  const DEL_CPS = 22
+  const hold = props.hold ?? 2200
+  const [shown, setShown] = useState(text)
+  const [morphed, setMorphed] = useState(false)
+  const [typing, setTyping] = useState(false)
+  const doneRef = useRef(props.onDone)
+  doneRef.current = props.onDone
+  useEffect(() => {
+    if (reducedMotion()) {
+      setShown(morphTo)
+      setMorphed(true)
+      setTyping(false)
+      doneRef.current?.()
+      return undefined
+    }
+    let cancelled = false
+    const timers: Array<ReturnType<typeof setTimeout>> = []
+    const wait = (dms: number) =>
+      new Promise<void>((r) => {
+        timers.push(setTimeout(r, dms))
+      })
+    async function run(): Promise<void> {
+      setTyping(true)
+      setMorphed(false)
+      setShown('')
+      for (let i = 1; i <= text.length; i++) {
+        if (cancelled) return
+        setShown(text.slice(0, i))
+        audio.click()
+        await wait(1000 / TYPE_CPS)
+      }
+      await wait(hold) // cursor hangs at the end of "CREW EXPENDABLE."
+      for (let i = text.length - 1; i >= 0; i--) {
+        if (cancelled) return
+        setShown(text.slice(0, i))
+        audio.click()
+        await wait(1000 / DEL_CPS)
+      }
+      setMorphed(true) // from here the line carries the amended tone
+      for (let i = 1; i <= morphTo.length; i++) {
+        if (cancelled) return
+        setShown(morphTo.slice(0, i))
+        audio.click()
+        await wait(1000 / TYPE_CPS)
+      }
+      if (cancelled) return
+      setTyping(false)
+      doneRef.current?.()
+    }
+    void run()
+    return () => {
+      cancelled = true
+      timers.forEach(clearTimeout)
+    }
+  }, [text, morphTo, hold, props.runKey])
+  const tone = morphed ? props.morphTone : props.tone
+  return (
+    <p
+      className={cx(
+        'mu-type',
+        props.variant === 'display' && 'mu-type-display',
+        'mu-tone-' + (tone || 'normal'),
+      )}
+    >
+      <span className="mu-sr">{morphTo}</span>
+      <span aria-hidden="true">{shown}</span>
+      {typing ? <Cursor /> : null}
+    </p>
+  )
+}
+
 export interface TypeSequenceProps {
   lines: Array<string | Line>
   cps?: number
@@ -210,8 +310,26 @@ export function TypeSequence(props: TypeSequenceProps): React.ReactElement {
       {lines.map((line, i) => {
         const l: Line = typeof line === 'string' ? { text: line } : line
         if (i > idx) return null
+        const advance = () => {
+          const pause = l.pause ?? cadence('pause-line', 120)
+          if (timer.current) clearTimeout(timer.current)
+          timer.current = setTimeout(
+            () => setIdx((n) => (n === i ? n + 1 : n)),
+            reducedMotion() ? 0 : pause,
+          )
+        }
+        // A completed morph line rests on its amended final text/tone.
         if (i < idx)
-          return (
+          return l.morphTo != null ? (
+            <Typewriter
+              key={i}
+              text={l.morphTo}
+              tone={l.morphTone}
+              variant={l.variant}
+              cps={Infinity}
+              cursor={false}
+            />
+          ) : (
             <Typewriter
               key={i}
               text={l.text}
@@ -219,6 +337,20 @@ export function TypeSequence(props: TypeSequenceProps): React.ReactElement {
               variant={l.variant}
               cps={Infinity}
               cursor={false}
+            />
+          )
+        if (l.morphTo != null)
+          return (
+            <MorphLine
+              key={i + '-' + String(props.runKey ?? 0)}
+              text={l.text}
+              morphTo={l.morphTo}
+              tone={l.tone}
+              morphTone={l.morphTone}
+              variant={l.variant}
+              hold={l.hold}
+              runKey={props.runKey}
+              onDone={advance}
             />
           )
         return (
@@ -229,14 +361,7 @@ export function TypeSequence(props: TypeSequenceProps): React.ReactElement {
             variant={l.variant}
             cps={l.cps ?? props.cps}
             cursor
-            onDone={() => {
-              const pause = l.pause ?? cadence('pause-line', 120)
-              if (timer.current) clearTimeout(timer.current)
-              timer.current = setTimeout(
-                () => setIdx((n) => (n === i ? n + 1 : n)),
-                reducedMotion() ? 0 : pause,
-              )
-            }}
+            onDone={advance}
           />
         )
       })}

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   autoplayLikely,
   createAudioManager,
+  KEY_GAIN,
   levelToVolume,
   nextLevel,
 } from './audio'
@@ -13,6 +14,7 @@ function fakePlayer() {
     play: vi.fn<(sprite?: string) => number>(() => 1),
     stop: vi.fn(),
     volume: vi.fn(),
+    rate: vi.fn(),
     once: vi.fn((event: string, fn: () => void) => {
       ;(handlers[event] ??= []).push(fn)
     }),
@@ -113,6 +115,44 @@ describe('audio manager', () => {
     expect(s.player.play).toHaveBeenCalledTimes(1)
     const sprite = s.player.play.mock.calls[0][0]
     expect(['key1', 'key2', 'key3']).toContain(sprite)
+  })
+
+  it('plays the typing clack softer than the base level (per-sprite gain)', async () => {
+    const s = setup({ nowSeq: [0] })
+    await s.mgr.arm()
+    s.mgr.setLevel('on')
+    s.mgr.click()
+    // The clack's own sound id is turned down relative to boot/chime so typing
+    // stays soft; play() returns id 1 from the fake player.
+    expect(s.player.volume).toHaveBeenCalledWith(0.35 * KEY_GAIN, 1)
+  })
+
+  it('plays the countdown tick at a rising rate and stays silent when off', async () => {
+    const s = setup()
+    await s.mgr.arm()
+    s.mgr.setLevel('off')
+    s.mgr.countdown(0.5)
+    expect(s.player.play).not.toHaveBeenCalled()
+
+    s.mgr.setLevel('on')
+    s.mgr.countdown(0) // top of the count → base pitch
+    s.mgr.countdown(1) // near zero → highest pitch
+    expect(s.player.play).toHaveBeenCalledWith('countdown')
+    const rates = s.player.rate.mock.calls.map((c) => c[0] as number)
+    expect(rates[0]).toBeCloseTo(1)
+    expect(rates[1]).toBeCloseTo(1.9)
+    expect(rates[1]).toBeGreaterThan(rates[0])
+  })
+
+  it('plays the all-clear chime only when audible', async () => {
+    const s = setup()
+    await s.mgr.arm()
+    s.mgr.setLevel('off')
+    s.mgr.allClear()
+    expect(s.player.play).not.toHaveBeenCalled()
+    s.mgr.setLevel('on')
+    s.mgr.allClear()
+    expect(s.player.play).toHaveBeenCalledWith('allclear')
   })
 
   it('throttles rapid clacks', async () => {

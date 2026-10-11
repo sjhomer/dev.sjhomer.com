@@ -13,10 +13,13 @@ import { MENU, complete, pageNav, resolvePath, suggest } from './queries'
 import { askLines, jonesyLines, rollLines, specialOrderLines } from './eggs'
 import { audio, autoplayLikely, nextLevel } from './audio'
 import type { SoundLevel } from './audio'
+import { useAutoScroll } from './useAutoScroll'
 import { SoundGate } from './SoundGate'
 import './console.css'
 
 const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
+/** Self-destruct starts here; the countdown tick rises in pitch toward zero. */
+const DESTRUCT_FROM = 10
 const PALETTE_NAMES: Record<string, string> = {
   mother: 'green',
   sevastopol: 'amber',
@@ -225,10 +228,12 @@ export function Console({
     }
   }, [])
 
-  // Self-destruct countdown.
+  // Self-destruct countdown, with a rising tick each second and a pleasant
+  // all-clear chime when the sequence resolves safely (it was never real).
   useEffect(() => {
     if (destruct == null) return undefined
     if (destruct <= 0) {
+      audio.allClear()
       print(undefined, [
         {
           text: 'DETONATION SIMULATED. THIS IS A PORTFOLIO, NOT A STARSHIP.',
@@ -240,12 +245,30 @@ export function Console({
       setDestruct(null)
       return undefined
     }
+    // rise: 0 at the top of the count (DESTRUCT_FROM) → ~0.9 on the last tick.
+    audio.countdown((DESTRUCT_FROM - destruct) / DESTRUCT_FROM)
     const t = setTimeout(
       () => setDestruct((n) => (n == null ? null : n - 1)),
       1000,
     )
     return () => clearTimeout(t)
   }, [destruct])
+
+  // Easter-egg view follows its own output to the bottom as blocks and the
+  // destruct box append (terminal-style) — distinct from the reading-paced
+  // auto-scroll on the content routes, which is suppressed in egg mode.
+  useEffect(() => {
+    if (!eggMode) return
+    const el = outRef.current
+    if (el) el.scrollTo({ top: el.scrollHeight })
+  }, [eggMode, log, destruct])
+
+  // Reading-paced auto-scroll on the content routes (not eggs, not the printable
+  // /cv). It restarts per page and pauses for good on the first user scroll.
+  const autoScrolling = useAutoScroll(outRef, {
+    active: !eggMode && !isHardcopy,
+    resetKey: pathname,
+  })
 
   // Konami → Sevastopol; number keys select; Escape returns home.
   useEffect(() => {
@@ -412,7 +435,7 @@ export function Console({
     }
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
       setEggMode(true)
-      setDestruct(10)
+      setDestruct(DESTRUCT_FROM)
       print(cmd, [
         {
           text: 'EMERGENCY DESTRUCT SEQUENCE ARMED. TYPE OVERRIDE TO ABORT.',
@@ -425,6 +448,7 @@ export function Console({
       setEggMode(true)
       if (destruct != null) {
         setDestruct(null)
+        audio.allClear()
         print(cmd, [
           {
             text: 'DESTRUCT SEQUENCE ABORTED. CREW ESSENTIAL.',
@@ -527,7 +551,8 @@ export function Console({
           className={
             'mu-out-wrap' +
             (moreUp ? ' more-up' : '') +
-            (moreDown ? ' more-down' : '')
+            (moreDown ? ' more-down' : '') +
+            (autoScrolling ? ' auto-reading' : '')
           }
         >
           <div
@@ -575,6 +600,11 @@ export function Console({
           <span className="mu-scroll-cue" aria-hidden="true">
             ▾ more below
           </span>
+          {autoScrolling ? (
+            <span className="mu-autoread" aria-hidden="true">
+              ▾ AUTO-READ
+            </span>
+          ) : null}
         </div>
 
         {!isHardcopy ? (
