@@ -4,6 +4,10 @@
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
+  // Interim home until the dev.sjhomer.com cutover: the *.workers.dev URL is
+  // our live/preview environment, and per-version Preview URLs are on.
+  "workers_dev": true,
+  "preview_urls": true,
   "observability": {
     "enabled": true,
   },
