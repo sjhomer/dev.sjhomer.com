@@ -19,18 +19,6 @@ import {
 } from './eggs'
 import './console.css'
 
-const BOOT: Array<Line> = [
-  { text: 'INTERFACE 2037 READY FOR INQUIRY', tone: 'dim', cps: 240 },
-  { text: '> MU/TH/UR 6000 .......... ONLINE', cps: 240 },
-  { text: '> CREW MANIFEST ......... LOADED', cps: 240 },
-  {
-    text: '> PERSONNEL FILE: HOMER, S.J.  CLEARANCE: COMMAND',
-    cps: 240,
-    pause: 300,
-  },
-  { text: 'SELECT QUERY, OR TYPE A COMMAND.', tone: 'dim', cps: 240 },
-]
-
 const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
 const PALETTE_NAMES: Record<string, string> = {
   mother: 'green',
@@ -65,7 +53,6 @@ export function Console({
 
   const [value, setValue] = useState('')
   const [log, setLog] = useState<Array<Block>>([])
-  const [booted, setBooted] = useState(true) // SSR + first paint: no boot block
   const [clock, setClock] = useState('--:--:--')
   const [palette, setPalette] = useState('mother')
   const [fxOff, setFxOff] = useState(false)
@@ -75,12 +62,6 @@ export function Console({
   const hist = useRef<Array<string>>([])
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // Boot once per session, only when landing on the root.
-  useEffect(() => {
-    const seen = sessionStorage.getItem('mu-booted') === '1'
-    if (!seen && pathname === '/') setBooted(false)
-  }, [])
 
   // Apply saved palette / effects imperatively (outside React, no hydration clash).
   useEffect(() => {
@@ -356,20 +337,6 @@ export function Console({
 
       <div className="mu-screen mu-screen-flicker mu-console-screen">
         <div className="mu-screen-body mu-console-out">
-          {!booted ? (
-            <TypeSequence
-              lines={BOOT}
-              onDone={() => {
-                try {
-                  sessionStorage.setItem('mu-booted', '1')
-                } catch {
-                  /* private mode */
-                }
-                setBooted(true)
-              }}
-            />
-          ) : null}
-
           {children}
 
           {log.map((b) => (

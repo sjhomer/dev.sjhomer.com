@@ -3,7 +3,8 @@
 
 .mu-console {
   box-sizing: border-box;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -79,11 +80,44 @@
 .mu-console-dock {
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--phosphor-faint);
   display: grid;
   gap: var(--space-3);
+}
+
+/* The docked menu is three columns across the bottom, PoC-style. */
+.mu-console-dock .mu-menu {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px var(--space-3);
+  max-width: none;
+}
+.mu-console-dock .mu-option {
+  grid-template-columns: 3ch 1fr;
+  gap: var(--space-2);
+}
+.mu-console-dock .mu-option-hint {
+  display: none;
+}
+
+/* Boot landing */
+.mu-boot {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+.mu-boot-banner {
+  font-size: var(--display-xl-size);
+  line-height: var(--display-xl-line);
+  letter-spacing: var(--display-xl-track);
+  margin: 0;
+}
+.mu-boot-bars {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--measure);
 }
 
 /* Visible auto-complete */
@@ -209,8 +243,15 @@
 @media (max-width: 520px) {
   .mu-console {
     padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
   }
   .mu-console-id span:nth-child(2) {
     display: none;
+  }
+  .mu-console-dock .mu-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mu-boot-banner {
+    font-size: 48px;
   }
 }

@@ -1,13 +1,18 @@
 import { expect, test } from '@playwright/test'
 
-test('dossier landing renders with the terminal chrome', async ({ page }) => {
+test('boot landing renders with banner, menu and prompt', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /DOSSIER/ })).toBeVisible()
-  await expect(page.getByText(/Head of Engineering/).first()).toBeVisible()
-  // MU/TH/UR status strip + numbered menu
-  await expect(page.getByText('MU/TH/UR 6000').first()).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /MU\/TH\/UR 6000/ }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: /Dossier/i }).first(),
+  ).toBeVisible()
   await expect(
     page.getByRole('link', { name: /Missions/i }).first(),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('textbox', { name: /Query MOTHER/i }),
   ).toBeVisible()
 })
 
@@ -23,13 +28,12 @@ test('menu navigation reaches a query page with its own URL', async ({
   await expect(page.getByText(/Recovery GPT/).first()).toBeVisible()
 })
 
-test('works without JavaScript (SSR + progressive enhancement)', async ({
+test('query pages work without JavaScript (SSR + progressive enhancement)', async ({
   browser,
 }) => {
   const context = await browser.newContext({ javaScriptEnabled: false })
   const page = await context.newPage()
-  await page.goto('/')
-  // Full dossier prose is in the server-rendered HTML
+  await page.goto('/dossier')
   await expect(
     page.getByText(/seasoned leader in digital solutions/).first(),
   ).toBeVisible()

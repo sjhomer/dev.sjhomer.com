@@ -1,4 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { DossierSection } from '../terminal/sections'
+import { BootLanding } from '../terminal/BootLanding'
 
-export const Route = createFileRoute('/')({ component: DossierSection })
+export const Route = createFileRoute('/')({ component: BootLanding })
