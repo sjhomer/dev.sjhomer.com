@@ -20,6 +20,16 @@ export const Route = createRootRoute({
           "Query the Nostromo's MU/TH/UR 6000 for the crew file of S.J. Homer: " +
           'two decades of engineering leadership, printed line by line.',
       },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'MU/TH/UR 6000 · S.J. Homer' },
+      {
+        property: 'og:image',
+        content: 'https://dev.sjhomer.com/og/default.png',
+      },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'theme-color', content: '#020a04' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),

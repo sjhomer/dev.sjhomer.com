@@ -57,6 +57,8 @@ export function Console({
   const [palette, setPalette] = useState('mother')
   const [fxOff, setFxOff] = useState(false)
   const [destruct, setDestruct] = useState<number | null>(null)
+  const [focused, setFocused] = useState(false)
+  const [cmdKey, setCmdKey] = useState('⌘ K')
 
   const nextId = useRef(1)
   const hist = useRef<Array<string>>([])
@@ -152,6 +154,11 @@ export function Console({
           },
         ])
       }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        inputRef.current?.focus()
+        return
+      }
       const inPrompt = document.activeElement === inputRef.current
       if (!inPrompt && /^[1-6]$/.test(e.key)) {
         const q = MENU[Number(e.key) - 1]
@@ -165,6 +172,18 @@ export function Console({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [navigate])
+
+  // Label the focus shortcut for the platform.
+  useEffect(() => {
+    try {
+      const mac = /Mac|iPhone|iPad/.test(
+        navigator.platform || navigator.userAgent,
+      )
+      if (!mac) setCmdKey('Ctrl K')
+    } catch {
+      /* no navigator */
+    }
+  }, [])
 
   function applyPalette(p: string) {
     if (!isHardcopy) document.documentElement.dataset.palette = p
@@ -211,6 +230,14 @@ export function Console({
     const logm = /^(?:SERVICE )?LOG\s+(.+)$/.exec(cmd)
     if (logm) {
       navigate({ to: '/log', search: { f: logm[1] } })
+      return
+    }
+
+    if (cmd === 'DOWNLOAD') {
+      window.open('/sjhomer-resume.pdf', '_blank', 'noopener')
+      print(cmd, [
+        { text: 'TRANSMITTING RESUME.PDF...', tone: 'dim', cps: 240 },
+      ])
       return
     }
 
@@ -297,7 +324,7 @@ export function Console({
     }
   }
 
-  const suggestions = value.trim() ? suggest(value) : []
+  const suggestions = focused || value.trim() ? suggest(value) : []
 
   return (
     <section className="mu-console" aria-label="MU/TH/UR terminal">
@@ -410,11 +437,17 @@ export function Console({
                 setValue('')
               }}
               onKeyDown={onKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               inputRef={inputRef}
               placeholder="Type a query, or HELP"
               label="Query MOTHER"
             />
             <div className="mu-term-hints" aria-hidden="true">
+              <KeyCap>
+                <span suppressHydrationWarning>{cmdKey}</span>
+              </KeyCap>{' '}
+              focus
               <KeyCap>1</KeyCap>–<KeyCap>6</KeyCap> select
               <KeyCap>Tab</KeyCap> complete
               <KeyCap>↑</KeyCap> history

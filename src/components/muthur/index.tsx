@@ -336,12 +336,15 @@ export interface PromptProps {
   label?: string
   prefix?: string
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>
+  onFocus?: () => void
+  onBlur?: () => void
   inputRef?: React.Ref<HTMLInputElement>
   autoFocus?: boolean
   className?: string
 }
 export function Prompt(props: PromptProps): React.ReactElement {
   const [own, setOwn] = useState('')
+  const [focused, setFocused] = useState(false)
   const controlled = props.value != null
   const value = controlled ? props.value! : own
   const idRef = useRef('mu-prompt-' + Math.random().toString(36).slice(2, 8))
@@ -367,11 +370,15 @@ export function Prompt(props: PromptProps): React.ReactElement {
       <span className="mu-prompt-field">
         <span className="mu-prompt-mirror" aria-hidden="true">
           {value ? (
-            value
+            <>
+              {value}
+              <Cursor />
+            </>
+          ) : focused ? (
+            <Cursor />
           ) : props.placeholder ? (
             <span className="mu-prompt-placeholder">{props.placeholder}</span>
           ) : null}
-          <Cursor />
         </span>
         <input
           id={idRef.current}
@@ -379,6 +386,14 @@ export function Prompt(props: PromptProps): React.ReactElement {
           value={value}
           onChange={change}
           onKeyDown={props.onKeyDown}
+          onFocus={() => {
+            setFocused(true)
+            props.onFocus?.()
+          }}
+          onBlur={() => {
+            setFocused(false)
+            props.onBlur?.()
+          }}
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}

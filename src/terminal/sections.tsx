@@ -279,6 +279,11 @@ export function CvSection(): React.ReactElement {
             </React.Fragment>
           ))}
         </p>
+        <p className="mu-cv-links">
+          <a href="/sjhomer-resume.pdf" download>
+            ↓ Download PDF
+          </a>
+        </p>
       </header>
 
       <section className="mu-cv-summary">

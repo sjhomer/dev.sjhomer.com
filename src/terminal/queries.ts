@@ -69,7 +69,7 @@ export const QUERIES: Array<Query> = [
     label: 'Plain CV',
     hint: 'printable resume',
     path: '/cv',
-    aliases: ['PRINT CV', 'RESUME', 'DOWNLOAD'],
+    aliases: ['PRINT CV', 'RESUME'],
     offMenu: true,
   },
 ]
@@ -82,6 +82,7 @@ export const BUILTINS = [
   'JONESY',
   'ROLL',
   'OVERRIDE',
+  'DOWNLOAD',
 ] as const
 
 /** Everything a Tab/visible auto-complete can offer, uppercase. */
@@ -103,15 +104,35 @@ export function resolvePath(raw: string): string | undefined {
   return undefined
 }
 
-/** Suggestions for the visible auto-complete, given the current input. */
-export function suggest(input: string, limit = 6): Array<Query> {
+export interface Suggestion {
+  name: string
+  hint: string
+}
+
+/** Everything the visible auto-complete offers, in discovery order. */
+const SUGGESTABLE: Array<Suggestion> = [
+  ...QUERIES.map((q) => ({ name: q.name, hint: q.hint })),
+  { name: 'HELP', hint: 'list all commands' },
+  { name: 'ASK', hint: 'ask MOTHER a question' },
+]
+
+function queryMatches(q: Query, c: string): boolean {
+  return q.name.startsWith(c) || (q.aliases ?? []).some((a) => a.startsWith(c))
+}
+
+/**
+ * Suggestions for the visible auto-complete. Empty input shows the full set
+ * (so commands are discoverable, not hidden); typing filters by name or alias.
+ */
+export function suggest(input: string, limit = 8): Array<Suggestion> {
   const c = input.trim().toUpperCase()
-  if (!c) return MENU
-  const hits = QUERIES.filter(
-    (q) =>
-      q.name.startsWith(c) || (q.aliases ?? []).some((a) => a.startsWith(c)),
+  if (!c) return SUGGESTABLE.slice(0, limit)
+  const aliasHits = new Set(
+    QUERIES.filter((q) => queryMatches(q, c)).map((q) => q.name),
   )
-  return hits.slice(0, limit)
+  return SUGGESTABLE.filter(
+    (s) => s.name.startsWith(c) || aliasHits.has(s.name),
+  ).slice(0, limit)
 }
 
 /** Longest common command completion for Tab. */
