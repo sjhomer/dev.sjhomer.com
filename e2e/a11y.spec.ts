@@ -32,6 +32,24 @@ test('the printable CV route has an h1 for its name', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
 })
 
+test('the CV route shows only a back button, no console controls', async ({
+  page,
+}) => {
+  await seedSound(page, 'off')
+  await page.goto('/cv')
+  // Client effect forces the hardcopy palette — a reliable "hydrated" signal.
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'hardcopy')
+
+  await expect(page.getByRole('button', { name: /^Palette:/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Effects/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Volume:/ })).toHaveCount(0)
+
+  const back = page.getByRole('button', { name: /BACK TO TRANSMIT/i })
+  await expect(back).toBeVisible()
+  await back.click()
+  await expect(page).toHaveURL(/\/transmit$/)
+})
+
 test('a skip link targets the main landmark', async ({ page }) => {
   await seedSound(page, 'off')
   await page.goto('/')

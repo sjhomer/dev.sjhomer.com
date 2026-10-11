@@ -34,6 +34,15 @@
   gap: var(--space-2);
   flex-wrap: wrap;
 }
+/* The /cv route replaces the whole strip with just this back button; it carries
+   the strip's type context so the .mu-toggle button renders consistently. */
+.mu-cv-bar {
+  display: flex;
+  font: 500 12px/20px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+}
 .mu-clock {
   font-variant-numeric: tabular-nums;
 }
@@ -514,6 +523,7 @@
 
 @media print {
   .mu-console-strip,
+  .mu-cv-bar,
   .mu-console-dock,
   .mu-scroll-cue,
   .mu-cv-download {

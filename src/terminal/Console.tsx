@@ -469,45 +469,43 @@ export function Console({
       <p className="mu-sr" role="status" aria-live="polite">
         {routeAnnounce}
       </p>
-      <div className="mu-console-strip" inert={showGate}>
-        <div className="mu-console-id">
-          <Link to="/" className="mu-console-home">
-            MU/TH/UR 6000
-          </Link>
-          <ShipClock />
+      {isHardcopy ? (
+        // The printable CV drops the console chrome entirely — just a way back.
+        <div className="mu-cv-bar">
+          <button
+            type="button"
+            className="mu-toggle mu-cv-back"
+            onClick={() => navigate({ to: '/transmit' })}
+          >
+            ◂ BACK TO TRANSMIT
+          </button>
         </div>
-        <div className="mu-console-ctl">
-          <button
-            type="button"
-            className="mu-toggle"
-            onClick={cyclePalette}
-            disabled={isHardcopy}
-          >
-            Palette: {PALETTE_NAMES[isHardcopy ? 'hardcopy' : palette]}
-          </button>
-          <button
-            type="button"
-            className="mu-toggle"
-            aria-pressed={fxOff}
-            onClick={toggleFx}
-          >
-            Effects {fxOff ? 'off' : 'on'}
-          </button>
-          {isHardcopy ? (
+      ) : (
+        <div className="mu-console-strip" inert={showGate}>
+          <div className="mu-console-id">
+            <Link to="/" className="mu-console-home">
+              MU/TH/UR 6000
+            </Link>
+            <ShipClock />
+          </div>
+          <div className="mu-console-ctl">
+            <button type="button" className="mu-toggle" onClick={cyclePalette}>
+              Palette: {PALETTE_NAMES[palette]}
+            </button>
             <button
               type="button"
               className="mu-toggle"
-              onClick={() => navigate({ to: '/' })}
+              aria-pressed={fxOff}
+              onClick={toggleFx}
             >
-              Terminal
+              Effects {fxOff ? 'off' : 'on'}
             </button>
-          ) : (
             <button type="button" className="mu-toggle" onClick={cycleVolume}>
               Volume: {soundLevel}
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         className="mu-screen mu-screen-flicker mu-console-screen"
