@@ -34,63 +34,87 @@ const ms = (n) => Math.round((n / 1000) * SR) // ms → samples
 /** Exponential decay envelope, 1 → ~0 over `tau` seconds. */
 const decay = (t, tau) => Math.exp(-t / tau)
 
+/** A bright "digital" tone: fundamental + odd harmonics ≈ a soft square wave. */
+function square(phase) {
+  return Math.sin(phase) + Math.sin(3 * phase) / 3 + Math.sin(5 * phase) / 5
+}
+
 /**
- * Boot cue: a low CRT hum bed, a rising beep sweep, and a relay clunk at the
- * end. ~1.8 s. Original synthesis — evokes a waking mainframe, copies nothing.
+ * MU/TH/UR power-up, ~2.25 s. Layers evoking the Nostromo computer coming
+ * online: a low computer-room hum bed, a burst of rapid data-processing blips
+ * (the interface "thinking"/streaming), and an ascending three-tone "system
+ * online" chime. All original synthesis — copies no sampled audio.
  */
 function boot() {
-  const dur = 1.85
+  const dur = 2.25
   const n = ms(dur * 1000)
   const out = new Float32Array(n)
   const rand = rng(0x4d555448) // "MUTH"
+
+  // 1) Computer-room hum bed: 60/120/180 Hz with a slow wobble, soft fades.
   for (let i = 0; i < n; i++) {
     const t = i / SR
-    // CRT mains hum: 60 Hz + 120 Hz, gentle wobble, soft fade in/out.
-    const bed =
-      (Math.sin(2 * Math.PI * 60 * t) * 0.55 +
-        Math.sin(2 * Math.PI * 120 * t) * 0.3) *
-      (0.9 + 0.1 * Math.sin(2 * Math.PI * 1.7 * t))
-    const fade = Math.min(1, t / 0.25) * Math.min(1, (dur - t) / 0.4)
-    let s = bed * 0.16 * fade
-    // Rising beep sweep, ~0.35 s → ~0.95 s: 420 Hz → 1180 Hz.
-    if (t > 0.35 && t < 0.95) {
-      const u = (t - 0.35) / 0.6
-      const freq = 420 + (1180 - 420) * u
-      const env = Math.sin(Math.PI * u) // soft in/out
-      s += Math.sin(2 * Math.PI * freq * t) * 0.22 * env
-    }
-    // Relay clunk near the end (~1.45 s): low thud + a short noise transient.
-    const rc = t - 1.45
-    if (rc > 0 && rc < 0.22) {
-      const env = decay(rc, 0.05)
-      const thud = Math.sin(2 * Math.PI * 85 * rc) * env
-      const click = (rand() * 2 - 1) * decay(rc, 0.012)
-      s += thud * 0.3 + click * 0.18
-    }
-    out[i] = s
+    const hum =
+      Math.sin(2 * Math.PI * 60 * t) * 0.5 +
+      Math.sin(2 * Math.PI * 120 * t) * 0.28 +
+      Math.sin(2 * Math.PI * 180 * t) * 0.12
+    const wob = 0.9 + 0.1 * Math.sin(2 * Math.PI * 2.3 * t)
+    const fade = Math.min(1, t / 0.2) * Math.min(1, (dur - t) / 0.4)
+    out[i] += hum * wob * 0.12 * fade
   }
+
+  // 2) Data-processing chatter: rapid bright blips, ~0.15 s → ~1.25 s.
+  const blipFreqs = [1180, 1480, 1650, 980, 1850, 1320, 1550]
+  let tb = 0.15
+  let k = 0
+  while (tb < 1.25) {
+    const f = blipFreqs[k % blipFreqs.length] * (0.98 + rand() * 0.06)
+    const start = ms(tb * 1000)
+    const bn = ms(32)
+    for (let i = 0; i < bn && start + i < n; i++) {
+      const t = i / SR
+      const env = Math.min(1, t / 0.001) * decay(t, 0.008)
+      out[start + i] += square(2 * Math.PI * f * t) * 0.16 * env
+    }
+    tb += 0.05 + rand() * 0.035 // ~50–85 ms spacing, slightly irregular
+    k++
+  }
+
+  // 3) Ascending "system online" chime (C5 → E5 → A5), soft swell per note.
+  const chime = [523.25, 659.25, 880.0]
+  chime.forEach((f, idx) => {
+    const start = ms((1.35 + idx * 0.22) * 1000)
+    const cn = ms(380)
+    for (let i = 0; i < cn && start + i < n; i++) {
+      const t = i / SR
+      const ph = 2 * Math.PI * f * t
+      const tone = Math.sin(ph) + Math.sin(2 * ph) * 0.22
+      const swell = Math.sin(Math.PI * Math.min(1, t / 0.38))
+      const atk = Math.min(1, t / 0.008)
+      out[start + i] += tone * 0.2 * swell * atk
+    }
+  })
+
   return out
 }
 
 /**
- * One mechanical key clack: a sharp noise transient shaped by a fast-decaying
- * low "key" body. `seed`/`center` jitter pitch & brightness between variants.
+ * One terminal key "beep" — the Nostromo interface chirps a short bright tone
+ * as each character prints, rather than a mechanical clack. A soft square tone
+ * with a fast attack and quick decay, plus a tiny contact fizz. `seed`/`freq`
+ * give each of the three variants its own pitch so typing chatters.
  */
-function clack(seed, bodyHz) {
-  const dur = 0.06
+function keyBeep(seed, freq) {
+  const dur = 0.05
   const n = ms(dur * 1000)
   const out = new Float32Array(n)
   const rand = rng(seed)
-  let lp = 0
   for (let i = 0; i < n; i++) {
     const t = i / SR
-    // Low-passed noise transient (the "tick" of the keycap hitting bottom).
-    const white = rand() * 2 - 1
-    lp += (white - lp) * 0.45 // simple one-pole LP
-    const tick = lp * decay(t, 0.006)
-    // Short resonant body (the keycap/plate thunk).
-    const body = Math.sin(2 * Math.PI * bodyHz * t) * decay(t, 0.018)
-    out[i] = tick * 0.6 + body * 0.35
+    const env = Math.min(1, t / 0.001) * decay(t, 0.012)
+    const tone = square(2 * Math.PI * freq * t) * 0.5
+    const fizz = (rand() * 2 - 1) * decay(t, 0.003) * 0.08
+    out[i] = (tone + fizz) * env
   }
   return out
 }
@@ -150,9 +174,9 @@ function toWav(buf) {
 
 const { buf, sprite } = pack([
   { name: 'boot', samples: boot() },
-  { name: 'key1', samples: clack(0x1111, 320) },
-  { name: 'key2', samples: clack(0x2222, 260) },
-  { name: 'key3', samples: clack(0x3333, 390) },
+  { name: 'key1', samples: keyBeep(0x1111, 1180) },
+  { name: 'key2', samples: keyBeep(0x2222, 1480) },
+  { name: 'key3', samples: keyBeep(0x3333, 1650) },
 ])
 
 await mkdir(resolve(root, 'public/audio'), { recursive: true })
