@@ -52,9 +52,7 @@ test('choosing the authentic experience records a sound level', async ({
     page.getByRole('dialog', { name: /ENABLE INTERFACE AUDIO/i }),
   ).toBeVisible()
   await page.getByRole('button', { name: /AUTHENTIC EXPERIENCE/i }).click()
-  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe(
-    'full',
-  )
+  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe('on')
 })
 
 /** The ship clock only ticks after client hydration — a reliable interactive signal. */
@@ -62,9 +60,7 @@ async function waitForHydration(page: Page) {
   await expect(page.locator('.mu-clock')).not.toContainText('--:--:--')
 }
 
-test('volume button cycles off -> low -> full and persists', async ({
-  page,
-}) => {
+test('volume button toggles off <-> on and persists', async ({ page }) => {
   await seedSound(page, 'off')
   await page.goto('/')
   await waitForHydration(page)
@@ -73,15 +69,28 @@ test('volume button cycles off -> low -> full and persists', async ({
   await expect(vol).toHaveText(/Volume: off/)
 
   await vol.click()
-  await expect(vol).toHaveText(/Volume: low/)
-  await vol.click()
-  await expect(vol).toHaveText(/Volume: full/)
+  await expect(vol).toHaveText(/Volume: on/)
+  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe('on')
+
   await vol.click()
   await expect(vol).toHaveText(/Volume: off/)
-
   expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe(
     'off',
   )
+})
+
+test('sound stays on after a full-load /cv round-trip', async ({ page }) => {
+  // Reproduces the bug: landing on /cv via a full page load skipped the audio
+  // sync, so returning to the terminal showed sound off despite the preference.
+  await seedSound(page, 'on')
+  await page.goto('/cv')
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'hardcopy')
+
+  await page.getByRole('button', { name: /BACK TO TRANSMIT/i }).click()
+  await expect(page).toHaveURL(/\/transmit$/)
+
+  const vol = page.getByRole('button', { name: /^Volume:/ })
+  await expect(vol).toHaveText(/Volume: on/)
 })
 
 test('palette button now cycles through hardcopy in place (no /cv nav)', async ({

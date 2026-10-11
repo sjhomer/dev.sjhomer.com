@@ -120,9 +120,12 @@ export function Console({
   // Return visit with a remembered choice → no modal; if sound was on, try an
   // audible boot and fall back to a one-click resume prompt when the browser blocks it.
   useEffect(() => {
-    if (window.location.pathname === '/cv') return // printable route: no audio
+    // Sync the Volume state with the persisted preference on ANY route — so a
+    // full page load that lands on /cv (via the VIEW CV link) still knows sound
+    // is on when the visitor returns to the terminal.
     const lvl = audio.getLevel()
     setSoundLevel(lvl)
+    if (window.location.pathname === '/cv') return // no gate/boot on the printable route
     if (!audio.hasPreference()) {
       setShowGate(true)
     } else if (lvl !== 'off') {
@@ -140,6 +143,15 @@ export function Console({
       }
     }
   }, [])
+
+  // Keep the player armed on sounded routes so key clacks survive a /cv
+  // round-trip: a full load that lands on /cv skips the boot gate above, so the
+  // player would otherwise stay null until a boot that never comes. arm() is
+  // idempotent; we never replay the boot here.
+  useEffect(() => {
+    if (pathname === '/cv') return
+    if (audio.getLevel() !== 'off') void audio.arm()
+  }, [pathname])
 
   // The hardcopy route forces the print palette; restore on leave.
   useEffect(() => {
@@ -324,7 +336,7 @@ export function Console({
   }
   // --- Sound -----------------------------------------------------------------
   function chooseSound(enable: boolean) {
-    const lvl: SoundLevel = enable ? 'full' : 'off'
+    const lvl: SoundLevel = enable ? 'on' : 'off'
     audio.setLevel(lvl)
     setSoundLevel(lvl)
     setShowGate(false)

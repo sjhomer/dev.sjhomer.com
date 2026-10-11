@@ -48,18 +48,16 @@ function setup(opts: { stored?: string | null; nowSeq?: Array<number> } = {}) {
 }
 
 describe('levelToVolume', () => {
-  it('maps levels to volumes', () => {
+  it('maps off to silence and on to a gentle level', () => {
     expect(levelToVolume('off')).toBe(0)
-    expect(levelToVolume('low')).toBeCloseTo(0.35)
-    expect(levelToVolume('full')).toBe(1)
+    expect(levelToVolume('on')).toBeCloseTo(0.35)
   })
 })
 
 describe('nextLevel', () => {
-  it('cycles off -> low -> full -> off', () => {
-    expect(nextLevel('off')).toBe('low')
-    expect(nextLevel('low')).toBe('full')
-    expect(nextLevel('full')).toBe('off')
+  it('toggles off <-> on', () => {
+    expect(nextLevel('off')).toBe('on')
+    expect(nextLevel('on')).toBe('off')
   })
 })
 
@@ -75,21 +73,28 @@ describe('audio manager', () => {
   })
 
   it('persists a chosen level', () => {
-    m.mgr.setLevel('full')
-    expect(m.getStored()).toBe('full')
+    m.mgr.setLevel('on')
+    expect(m.getStored()).toBe('on')
     expect(m.mgr.hasPreference()).toBe(true)
-    expect(m.mgr.getLevel()).toBe('full')
+    expect(m.mgr.getLevel()).toBe('on')
   })
 
   it('reads a stored level on construction', () => {
-    const s = setup({ stored: 'low' })
+    const s = setup({ stored: 'on' })
     expect(s.mgr.hasPreference()).toBe(true)
-    expect(s.mgr.getLevel()).toBe('low')
+    expect(s.mgr.getLevel()).toBe('on')
+  })
+
+  it('migrates the retired low/full levels to on', () => {
+    expect(setup({ stored: 'low' }).mgr.getLevel()).toBe('on')
+    const full = setup({ stored: 'full' })
+    expect(full.mgr.getLevel()).toBe('on')
+    expect(full.mgr.hasPreference()).toBe(true)
   })
 
   it('applies volume to the player once armed and level changes', async () => {
     await m.mgr.arm()
-    m.mgr.setLevel('low')
+    m.mgr.setLevel('on')
     expect(m.player.volume).toHaveBeenCalledWith(0.35)
   })
 
@@ -103,7 +108,7 @@ describe('audio manager', () => {
   it('plays a key clack when armed and audible', async () => {
     const s = setup({ nowSeq: [0] })
     await s.mgr.arm()
-    s.mgr.setLevel('full')
+    s.mgr.setLevel('on')
     s.mgr.click()
     expect(s.player.play).toHaveBeenCalledTimes(1)
     const sprite = s.player.play.mock.calls[0][0]
@@ -114,7 +119,7 @@ describe('audio manager', () => {
     // now advances 0, 10, 50 → second click (10ms) throttled, third (50ms) ok
     const s = setup({ nowSeq: [0, 10, 50] })
     await s.mgr.arm()
-    s.mgr.setLevel('full')
+    s.mgr.setLevel('on')
     s.mgr.click() // t=0  -> plays
     s.mgr.click() // t=10 -> throttled
     s.mgr.click() // t=50 -> plays
@@ -127,14 +132,14 @@ describe('audio manager', () => {
     s.mgr.setLevel('off')
     await s.mgr.playBoot()
     expect(s.player.play).not.toHaveBeenCalled()
-    s.mgr.setLevel('full')
+    s.mgr.setLevel('on')
     await s.mgr.playBoot()
     expect(s.player.play).toHaveBeenCalledWith('boot')
   })
 
   it('click is a no-op before arming (no player loaded)', () => {
     const s = setup()
-    s.mgr.setLevel('full')
+    s.mgr.setLevel('on')
     // not armed → nothing to play, must not throw
     expect(() => s.mgr.click()).not.toThrow()
     expect(s.player.play).not.toHaveBeenCalled()
@@ -142,7 +147,7 @@ describe('audio manager', () => {
 
   it('drops the pending playerror listener once the boot plays', async () => {
     const s = setup()
-    s.mgr.setLevel('full')
+    s.mgr.setLevel('on')
     await s.mgr.playBoot({ onBlocked: vi.fn() })
     expect(s.player.pending('playerror')).toBe(1)
     s.player.fire('play') // success → the stale error listener is removed
@@ -155,7 +160,7 @@ describe('audio manager', () => {
 
   it('invokes onBlocked and drops the play listener when the boot is blocked', async () => {
     const s = setup()
-    s.mgr.setLevel('full')
+    s.mgr.setLevel('on')
     const onBlocked = vi.fn()
     await s.mgr.playBoot({ onBlocked })
     s.player.fire('playerror')

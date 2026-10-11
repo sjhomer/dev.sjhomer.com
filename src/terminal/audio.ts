@@ -11,28 +11,32 @@
  */
 import spriteData from './sfx-sprite.json'
 
-export type SoundLevel = 'off' | 'low' | 'full'
-export const SOUND_LEVELS = ['off', 'low', 'full'] as const
+export type SoundLevel = 'off' | 'on'
+export const SOUND_LEVELS = ['off', 'on'] as const
 
 const KEYS = ['key1', 'key2', 'key3'] as const
 const CLICK_THROTTLE_MS = 40
 const STORE_KEY = 'mu-sound'
 
-/** Level → Howler volume (0..1). */
+/** Level → Howler volume (0..1). 'on' is deliberately gentle (full was too loud). */
 export function levelToVolume(level: SoundLevel): number {
-  if (level === 'full') return 1
-  if (level === 'low') return 0.35
-  return 0
+  return level === 'on' ? 0.35 : 0
 }
 
-/** The volume button cycles off → low → full → off. */
+/** The volume button toggles off ↔ on. */
 export function nextLevel(level: SoundLevel): SoundLevel {
   const i = SOUND_LEVELS.indexOf(level)
   return SOUND_LEVELS[(i + 1) % SOUND_LEVELS.length]
 }
 
-function isLevel(v: unknown): v is SoundLevel {
-  return v === 'off' || v === 'low' || v === 'full'
+/**
+ * Normalise a stored value, migrating the retired 'low'/'full' levels to 'on'.
+ * Returns null when nothing valid is stored (i.e. no preference recorded yet).
+ */
+function normalizeLevel(v: unknown): SoundLevel | null {
+  if (v === 'off') return 'off'
+  if (v === 'on' || v === 'low' || v === 'full') return 'on'
+  return null
 }
 
 /** The slice of Howl's surface we depend on (keeps howler types off the edges). */
@@ -70,9 +74,9 @@ export interface AudioManager {
 }
 
 export function createAudioManager(deps: AudioDeps): AudioManager {
-  const initial = deps.read()
-  let level: SoundLevel = isLevel(initial) ? initial : 'off'
-  let preference = isLevel(initial)
+  const stored = normalizeLevel(deps.read())
+  let level: SoundLevel = stored ?? 'off'
+  let preference = stored !== null
   let player: Player | null = null
   let loading: Promise<Player> | null = null
   let lastClick = -Infinity
