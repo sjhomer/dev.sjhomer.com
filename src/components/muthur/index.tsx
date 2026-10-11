@@ -24,9 +24,15 @@ function cx(...parts: Array<string | false | null | undefined>): string {
 
 function reducedMotion(): boolean {
   try {
+    // No matchMedia (SSR, jsdom tests): treat as reduced so content shows in full.
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    )
+      return true
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   } catch {
-    return false
+    return true
   }
 }
 
@@ -224,6 +230,42 @@ export function TypeSequence(props: TypeSequenceProps): React.ReactElement {
       ) : null}
     </div>
   )
+}
+
+export interface StagedProps {
+  children: React.ReactNode
+  /** ms between each child appearing. */
+  gap?: number
+  className?: string
+}
+/**
+ * Reveals its children one at a time, top to bottom (each then types on its own).
+ * Full on SSR / no-JS / reduced motion; cascades on the client. Re-runs when
+ * `runKey` changes (e.g. a route change) so each page loads in from the top.
+ */
+export function Staged(
+  props: StagedProps & { runKey?: React.Key },
+): React.ReactElement {
+  const items = React.Children.toArray(props.children)
+  const total = items.length
+  const [n, setN] = useState(total)
+  useEffect(() => {
+    if (reducedMotion()) {
+      setN(total)
+      return undefined
+    }
+    setN(0)
+    let i = 0
+    let t: ReturnType<typeof setTimeout>
+    const step = () => {
+      i += 1
+      setN(i)
+      if (i < total) t = setTimeout(step, props.gap ?? 150)
+    }
+    t = setTimeout(step, props.gap ?? 150)
+    return () => clearTimeout(t)
+  }, [total, props.gap, props.runKey])
+  return <div className={props.className}>{items.slice(0, n)}</div>
 }
 
 export interface TagProps {

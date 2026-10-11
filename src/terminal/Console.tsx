@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   Alert,
   KeyCap,
@@ -18,6 +18,16 @@ import {
   specialOrderLines,
 } from './eggs'
 import './console.css'
+
+/** Query order for mobile swipe navigation. */
+const SWIPE_ORDER = [
+  '/dossier',
+  '/log',
+  '/missions',
+  '/systems',
+  '/quarters',
+  '/transmit',
+]
 
 const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
 const PALETTE_NAMES: Record<string, string> = {
@@ -54,16 +64,20 @@ export function Console({
   const [value, setValue] = useState('')
   const [log, setLog] = useState<Array<Block>>([])
   const [clock, setClock] = useState('--:--:--')
+  const [shipDate, setShipDate] = useState('----.--.--')
   const [palette, setPalette] = useState('mother')
   const [fxOff, setFxOff] = useState(false)
   const [destruct, setDestruct] = useState<number | null>(null)
   const [focused, setFocused] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
+  const [error, setError] = useState('')
 
   const nextId = useRef(1)
   const hist = useRef<Array<string>>([])
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
+  const outRef = useRef<HTMLDivElement>(null)
+  const touch = useRef<{ x: number; y: number } | null>(null)
 
   // Apply saved palette / effects imperatively (outside React, no hydration clash).
   useEffect(() => {
@@ -84,20 +98,27 @@ export function Console({
     }
   }, [isHardcopy, palette])
 
-  // Ship clock (client only).
+  // Ship clock + date (client only; rolls over at midnight).
   useEffect(() => {
+    const pad = (n: number) => String(n).padStart(2, '0')
     const tick = () => {
       const d = new Date()
       setClock(
-        [d.getHours(), d.getMinutes(), d.getSeconds()]
-          .map((n) => String(n).padStart(2, '0'))
-          .join(':'),
+        [d.getHours(), d.getMinutes(), d.getSeconds()].map(pad).join(':'),
+      )
+      setShipDate(
+        `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`,
       )
     }
     tick()
     const t = setInterval(tick, 1000)
     return () => clearInterval(t)
   }, [])
+
+  // Each query page starts scrolled to its top (no retained scroll, no jump).
+  useEffect(() => {
+    outRef.current?.scrollTo({ top: 0 })
+  }, [pathname])
 
   // Self-destruct countdown.
   useEffect(() => {
@@ -216,21 +237,23 @@ export function Console({
     setLog((b) => b.concat([{ id: nextId.current++, echo, lines }]).slice(-16))
   }
 
-  function run(raw: string) {
+  /** Runs a command. Returns true when recognised (valid), false otherwise. */
+  function run(raw: string): boolean {
     const cmd = raw.trim().toUpperCase().replace(/\s+/g, ' ')
-    if (!cmd) return
+    if (!cmd) return false
     hist.current.unshift(cmd)
     histPos.current = -1
+    setError('')
 
     if (cmd === 'CLEAR') {
       setLog([])
-      return
+      return true
     }
 
     const logm = /^(?:SERVICE )?LOG\s+(.+)$/.exec(cmd)
     if (logm) {
       navigate({ to: '/log', search: { f: logm[1] } })
-      return
+      return true
     }
 
     if (cmd === 'DOWNLOAD') {
@@ -238,34 +261,34 @@ export function Console({
       print(cmd, [
         { text: 'TRANSMITTING RESUME.PDF...', tone: 'dim', cps: 240 },
       ])
-      return
+      return true
     }
 
     const path = resolvePath(cmd)
     if (path) {
       navigate({ to: path })
-      return
+      return true
     }
 
     if (cmd === 'HELP' || cmd === 'MENU') {
       print(cmd, helpLines())
-      return
+      return true
     }
     if (cmd === 'JONESY') {
       print(cmd, jonesyLines())
-      return
+      return true
     }
     if (cmd.startsWith('ROLL')) {
       print(cmd, rollLines(cmd.slice(4).trim()))
-      return
+      return true
     }
     if (cmd.startsWith('ASK')) {
       print(cmd, askLines(cmd.slice(3).trim()))
-      return
+      return true
     }
     if (cmd === 'SPECIAL ORDER 937') {
       print(cmd, specialOrderLines())
-      return
+      return true
     }
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
       document.body.dataset.alarm = ''
@@ -276,7 +299,7 @@ export function Console({
           tone: 'alert',
         },
       ])
-      return
+      return true
     }
     if (cmd === 'OVERRIDE') {
       if (destruct != null) {
@@ -294,16 +317,11 @@ export function Console({
           { text: 'NO SEQUENCE TO OVERRIDE.', tone: 'dim', cps: 240 },
         ])
       }
-      return
+      return true
     }
 
-    print(cmd, [
-      {
-        text: `UNABLE TO COMPUTE. QUERY "${cmd}" NOT RECOGNISED.`,
-        tone: 'alert',
-      },
-      { text: 'TYPE HELP FOR AVAILABLE QUERIES.', tone: 'dim', cps: 240 },
-    ])
+    setError(`UNABLE TO COMPUTE. QUERY "${cmd}" NOT RECOGNISED — TYPE HELP.`)
+    return false
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -324,14 +342,38 @@ export function Console({
     }
   }
 
+  function onTouchStart(e: React.TouchEvent) {
+    const t = e.touches[0]
+    touch.current = { x: t.clientX, y: t.clientY }
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (!touch.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touch.current.x
+    const dy = t.clientY - touch.current.y
+    touch.current = null
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    const idx = SWIPE_ORDER.indexOf(pathname)
+    const len = SWIPE_ORDER.length
+    let next: number
+    if (idx === -1) next = dx < 0 ? 0 : len - 1
+    else next = dx < 0 ? (idx + 1) % len : (idx - 1 + len) % len
+    navigate({ to: SWIPE_ORDER[next] })
+  }
+
   const suggestions = focused || value.trim() ? suggest(value) : []
 
   return (
-    <section className="mu-console" aria-label="MU/TH/UR terminal">
+    <section
+      className={'mu-console' + (focused ? ' mu-console--focus' : '')}
+      aria-label="MU/TH/UR terminal"
+    >
       <div className="mu-console-strip">
         <div className="mu-console-id">
-          <span>MU/TH/UR 6000</span>
-          <span>Nostromo · 180924609</span>
+          <Link to="/" className="mu-console-home">
+            MU/TH/UR 6000
+          </Link>
+          <span>Nostromo · {shipDate}</span>
           <span className="mu-clock">SHIP TIME {clock}</span>
         </div>
         <div className="mu-console-ctl">
@@ -362,8 +404,12 @@ export function Console({
         </div>
       </div>
 
-      <div className="mu-screen mu-screen-flicker mu-console-screen">
-        <div className="mu-screen-body mu-console-out">
+      <div
+        className="mu-screen mu-screen-flicker mu-console-screen"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <div className="mu-screen-body mu-console-out" ref={outRef}>
           {children}
 
           {log.map((b) => (
@@ -388,53 +434,67 @@ export function Console({
 
         {!isHardcopy ? (
           <div className="mu-console-dock">
-            <nav aria-label="Queries">
-              <ul className="mu-menu">
-                {MENU.map((q) => (
-                  <li key={q.name}>
-                    <MenuOption
-                      index={q.index!}
-                      label={q.label}
-                      hint={q.hint}
-                      href={q.path}
-                      active={pathname === q.path}
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        if (q.path) navigate({ to: q.path })
-                      }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            <div className="mu-dock-nav">
+              <nav aria-label="Queries">
+                <ul className="mu-menu">
+                  {MENU.map((q) => (
+                    <li key={q.name}>
+                      <MenuOption
+                        index={q.index!}
+                        label={q.label}
+                        hint={q.hint}
+                        href={q.path}
+                        active={pathname === q.path}
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          if (q.path) navigate({ to: q.path })
+                        }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </nav>
 
-            {suggestions.length ? (
-              <ul className="mu-suggest" aria-label="Suggestions">
-                {suggestions.map((q) => (
-                  <li key={q.name}>
-                    <button
-                      type="button"
-                      className="mu-suggest-item"
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        run(q.name)
-                        setValue('')
-                      }}
-                    >
-                      <span>{q.name}</span>
-                      <span className="mu-suggest-hint">{q.hint}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+              {suggestions.length ? (
+                <div className="mu-suggest-panel" aria-label="Commands">
+                  <p className="mu-suggest-head">COMMANDS — TYPE TO FILTER</p>
+                  <ul className="mu-suggest">
+                    {suggestions.map((q) => (
+                      <li key={q.name}>
+                        <button
+                          type="button"
+                          className="mu-suggest-item"
+                          data-group={q.group}
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            run(q.name)
+                            setValue('')
+                            inputRef.current?.blur()
+                          }}
+                        >
+                          <span className="mu-suggest-name">{q.name}</span>
+                          <span className="mu-suggest-hint">{q.hint}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
 
             <Prompt
               value={value}
-              onChange={setValue}
+              onChange={(v) => {
+                setValue(v)
+                if (error) setError('')
+              }}
               onSubmit={(v) => {
-                run(v)
-                setValue('')
+                // Valid command (or selection): run, clear, and close the palette.
+                // Invalid: keep focus open with the error showing.
+                if (run(v)) {
+                  setValue('')
+                  inputRef.current?.blur()
+                }
               }}
               onKeyDown={onKeyDown}
               onFocus={() => setFocused(true)}
@@ -443,7 +503,12 @@ export function Console({
               placeholder="Type a query, or HELP"
               label="Query MOTHER"
             />
-            <div className="mu-term-hints" aria-hidden="true">
+            {error ? (
+              <p className="mu-prompt-error" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <div className="mu-term-hints mu-hints-desktop" aria-hidden="true">
               <KeyCap>
                 <span suppressHydrationWarning>{cmdKey}</span>
               </KeyCap>{' '}
@@ -453,6 +518,10 @@ export function Console({
               <KeyCap>↑</KeyCap> history
               <KeyCap>Esc</KeyCap> home
             </div>
+            <p className="mu-term-hints mu-hints-mobile" aria-hidden="true">
+              <span className="mu-swipe">⇠ swipe ⇢</span> to move between
+              queries · tap the line to type a command
+            </p>
           </div>
         ) : null}
       </div>

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ServiceLogSection } from '../terminal/sections'
 import { pageHead } from '../seo'
 
@@ -19,5 +19,11 @@ export const Route = createFileRoute('/log')({
 
 function LogRoute() {
   const { f } = Route.useSearch()
-  return <ServiceLogSection filter={f} />
+  const navigate = useNavigate()
+  return (
+    <ServiceLogSection
+      filter={f}
+      onFilter={(k) => navigate({ to: '/log', search: k ? { f: k } : {} })}
+    />
+  )
 }

@@ -68,13 +68,48 @@
 .mu-console-out {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-color: var(--phosphor-faint) transparent;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--phosphor-dim) var(--crt-void);
   align-content: start;
+  transition: opacity 140ms ease;
+}
+.mu-console-out::-webkit-scrollbar {
+  width: 10px;
+}
+.mu-console-out::-webkit-scrollbar-thumb {
+  background: var(--phosphor-dim);
+}
+.mu-console-out::-webkit-scrollbar-track {
+  background: var(--crt-void);
 }
 .mu-console-block {
   display: grid;
   gap: var(--space-1);
+}
+
+/* Each query's content loads in top to bottom via <Staged>. */
+.mu-section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+/* Clickable wordmark returns home. */
+.mu-console-home {
+  color: var(--phosphor-dim);
+  text-decoration: none;
+  letter-spacing: inherit;
+}
+.mu-console-home:hover {
+  color: var(--phosphor);
+  text-shadow: var(--glow-sm);
+}
+
+/* Focus = a command palette: dim the monitor, lift the prompt + suggestions. */
+.mu-console--focus .mu-console-out {
+  opacity: 0.25;
+  pointer-events: none;
 }
 
 .mu-console-dock {
@@ -120,44 +155,160 @@
   max-width: var(--measure);
 }
 
-/* Visible auto-complete */
+/* Visible auto-complete: a palette panel overlaid over the menu on focus. */
+.mu-dock-nav {
+  position: relative;
+}
+.mu-suggest-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  max-height: 48vh;
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--crt-panel);
+  border: 1px solid var(--phosphor-dim);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.55);
+  display: grid;
+  gap: var(--space-2);
+  scrollbar-color: var(--phosphor-dim) var(--crt-void);
+}
+.mu-suggest-head {
+  margin: 0;
+  font: 500 12px/18px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+}
 .mu-suggest {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   margin: 0;
   padding: 0;
   list-style: none;
-  max-width: var(--measure);
 }
 .mu-suggest-item {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
   width: 100%;
-  padding: 0 var(--space-2);
+  padding: 2px var(--space-2);
   border: 0;
   background: none;
   color: var(--phosphor);
   font: inherit;
   line-height: 26px;
   text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   text-shadow: var(--glow-sm);
   cursor: pointer;
 }
-.mu-suggest-item:hover {
+.mu-suggest-name {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.mu-suggest-item[data-group='easter'] .mu-suggest-name {
+  color: var(--caution);
+}
+.mu-suggest-item[data-group='log'] .mu-suggest-name {
+  color: var(--phosphor-dim);
+}
+.mu-suggest-item:hover,
+.mu-suggest-item:focus-visible {
   background: var(--phosphor);
   color: var(--on-phosphor);
   text-shadow: none;
+  outline: none;
+}
+.mu-suggest-item:hover .mu-suggest-name,
+.mu-suggest-item:hover .mu-suggest-hint {
+  color: var(--on-phosphor);
 }
 .mu-suggest-hint {
   color: var(--phosphor-dim);
   text-transform: none;
   letter-spacing: 0;
+  text-align: right;
 }
-.mu-suggest-item:hover .mu-suggest-hint {
+
+/* Service log: employer groups */
+.mu-emp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.mu-emp-tab {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--phosphor-dim);
+  color: var(--phosphor-dim);
+  font: 500 12px/20px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.mu-emp-tab:hover,
+.mu-emp-tab[data-active='true'] {
+  background: var(--phosphor);
   color: var(--on-phosphor);
+  border-color: var(--phosphor);
+}
+.mu-employer {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--phosphor-faint);
+}
+.mu-employer-head {
+  display: grid;
+  gap: var(--space-1);
+}
+.mu-employer-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--display-l-size);
+  line-height: var(--display-l-line);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: var(--glow-lg);
+}
+.mu-employer-meta {
+  margin: 0;
+  font: 500 12px/20px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+  font-variant-numeric: tabular-nums;
+}
+.mu-pos {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--phosphor-faint);
+}
+.mu-pos-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+}
+.mu-pos-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: var(--glow-sm);
+}
+.mu-pos-dates {
+  color: var(--phosphor-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 .mu-countdown {
@@ -240,18 +391,64 @@
   }
 }
 
-@media (max-width: 520px) {
+/* Command error, shown by the prompt (never in the dimmed output). */
+.mu-prompt-error {
+  margin: 0;
+  color: var(--alert);
+  text-shadow: var(--glow-alert);
+  font-size: 13px;
+  line-height: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Mobile hints are hidden on desktop. */
+.mu-hints-mobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
   .mu-console {
     padding: var(--space-2) var(--space-3);
     gap: var(--space-2);
   }
-  .mu-console-id span:nth-child(2) {
+  /* The numbered menu is too large for phones; the prompt + swipe navigate. */
+  .mu-console-dock nav[aria-label='Queries'] {
     display: none;
   }
-  .mu-console-dock .mu-menu {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .mu-hints-desktop {
+    display: none;
+  }
+  .mu-hints-mobile {
+    display: block;
+    margin: 0;
+    text-align: center;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .mu-swipe {
+    color: var(--phosphor);
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+  .mu-suggest-panel {
+    max-height: 62vh;
   }
   .mu-boot-banner {
+    font-size: 44px;
+  }
+  .mu-employer-name {
+    font-size: 38px;
+  }
+  .mu-pos-title {
+    font-size: 22px;
+  }
+  .mu-metric-value {
     font-size: 48px;
+  }
+  .mu-type,
+  .mu-log-item span,
+  .mu-datarow-value {
+    overflow-wrap: anywhere;
   }
 }

@@ -2,8 +2,8 @@ import * as React from 'react'
 import {
   DataRow,
   Divider,
-  LogEntry,
   Metric,
+  Staged,
   Tag,
   Typewriter,
   TypeSequence,
@@ -28,7 +28,7 @@ function Title({ children }: { children: string }) {
 export function DossierSection(): React.ReactElement {
   const head = roles[0]
   return (
-    <div className="mu-pad" style={{ padding: 0 }}>
+    <Staged className="mu-section">
       <Title>DOSSIER</Title>
       <DataRow label="OFFICER" value={profile.displayName} />
       <DataRow label="POST" value={profile.title} />
@@ -52,53 +52,146 @@ export function DossierSection(): React.ReactElement {
         tone="dim"
         cps={240}
       />
-    </div>
+    </Staged>
   )
+}
+
+interface Employer {
+  company: string
+  key: string
+  location?: string
+  roles: typeof roles
+}
+
+function employerKey(company: string): string {
+  return company.split(/[\s(]/)[0].toUpperCase()
+}
+
+function groupByEmployer(): Array<Employer> {
+  const out: Array<Employer> = []
+  for (const r of roles) {
+    let g = out.find((e) => e.company === r.company)
+    if (!g) {
+      g = {
+        company: r.company,
+        key: employerKey(r.company),
+        location: r.location,
+        roles: [],
+      }
+      out.push(g)
+    }
+    g.roles.push(r)
+  }
+  return out
 }
 
 export function ServiceLogSection({
   filter,
+  onFilter,
 }: {
   filter?: string
+  onFilter?: (key: string) => void
 }): React.ReactElement {
   const key = (filter || '').replace(/\s+/g, '').toUpperCase()
-  const list = key
-    ? roles.filter(
-        (r) =>
-          r.company.toUpperCase().replace(/\s+/g, '').startsWith(key) ||
-          r.id
-            .toUpperCase()
-            .replace(/[^A-Z]/g, '')
-            .startsWith(key),
+  const employers = groupByEmployer()
+  const shown = key
+    ? employers.filter(
+        (e) =>
+          e.key.startsWith(key) ||
+          e.company.toUpperCase().replace(/\s+/g, '').startsWith(key),
       )
-    : roles
+    : employers
+
+  const tab = (tabKey: string, label: string, active: boolean) => (
+    <a
+      key={tabKey || 'all'}
+      href={tabKey ? `/log?f=${tabKey}` : '/log'}
+      className="mu-emp-tab"
+      data-active={active ? 'true' : undefined}
+      onClick={(e) => {
+        if (onFilter) {
+          e.preventDefault()
+          onFilter(tabKey)
+        }
+      }}
+    >
+      {label}
+    </a>
+  )
+
   return (
-    <div className="mu-pad" style={{ padding: 0 }}>
+    <Staged className="mu-section">
       <Title>SERVICE LOG</Title>
       <Typewriter
         text={
           key
-            ? `FILTER: ${key} · ${list.length} RECORD(S)`
-            : `2005 → PRESENT · ${list.length} RECORDS · FILTER WITH LOG <EMPLOYER>`
+            ? `FILTER: ${key}`
+            : `2005 → PRESENT · ${roles.length} RECORDS ACROSS ${employers.length} POSTINGS`
         }
         tone="dim"
         cps={240}
       />
-      {list.length ? (
-        list.map((r) => (
-          <LogEntry
-            key={r.id}
-            role={{
-              title: r.title,
-              company: r.location ? `${r.company} · ${r.location}` : r.company,
-              start: r.start,
-              end: r.end,
-              remote: r.remote,
-              clearance: r.clearance,
-              highlights: r.highlights,
-            }}
-          />
-        ))
+      <nav className="mu-emp-tabs" aria-label="Filter by employer">
+        {tab('', 'ALL', !key)}
+        {employers.map((e) =>
+          tab(e.key, e.key, Boolean(key) && e.key.startsWith(key)),
+        )}
+      </nav>
+
+      {shown.length ? (
+        shown.map((e) => {
+          const oldest = e.roles[e.roles.length - 1]
+          const newest = e.roles[0]
+          const span = `${monthYear(oldest.start)} → ${newest.end ? monthYear(newest.end) : 'PRESENT'}`
+          return (
+            <section key={e.key} className="mu-employer">
+              <header className="mu-employer-head">
+                <h3 className="mu-employer-name">{e.company}</h3>
+                <p className="mu-employer-meta">
+                  {span}
+                  {e.location ? ` · ${e.location}` : ''}
+                  {newest.remote ? ' · REMOTE' : ''}
+                </p>
+              </header>
+              {e.roles.map((r) => (
+                <article key={r.id} className="mu-pos">
+                  <div className="mu-pos-head">
+                    <h4 className="mu-pos-title">{r.title}</h4>
+                    <span className="mu-pos-dates">
+                      {monthYear(r.start)} –{' '}
+                      {r.end ? monthYear(r.end) : 'Present'}
+                    </span>
+                    <Tag
+                      tone={
+                        r.clearance === 'COMMAND'
+                          ? 'caution'
+                          : r.clearance === 'ARCHIVED'
+                            ? 'dim'
+                            : 'normal'
+                      }
+                    >
+                      {r.clearance}
+                    </Tag>
+                  </div>
+                  <ul className="mu-log-list">
+                    {r.highlights.map((h, i) => (
+                      <li key={i} className="mu-log-item">
+                        {h.metric ? (
+                          <span className="mu-log-metric">{h.metric}</span>
+                        ) : (
+                          <span className="mu-log-bullet" aria-hidden="true">
+                            ■
+                          </span>
+                        )}
+                        <span>{h.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </section>
+          )
+        })
       ) : (
         <Typewriter
           text={`NO RECORD FOR "${key}". TRY LOG BATTLEFY, LOG THEREFORE, LOG RC OR LOG STEELSERIES.`}
@@ -106,13 +199,13 @@ export function ServiceLogSection({
         />
       )}
       <Divider label="End of file" />
-    </div>
+    </Staged>
   )
 }
 
 export function MissionsSection(): React.ReactElement {
   return (
-    <div className="mu-pad" style={{ padding: 0 }}>
+    <Staged className="mu-section">
       <Title>MISSIONS</Title>
       <Typewriter text="CASE STUDIES ON RECORD" tone="dim" cps={240} />
       {missions.map((m) => (
@@ -151,13 +244,13 @@ export function MissionsSection(): React.ReactElement {
         </section>
       ))}
       <Divider label="End of file" />
-    </div>
+    </Staged>
   )
 }
 
 export function SystemsSection(): React.ReactElement {
   return (
-    <div className="mu-pad" style={{ padding: 0 }}>
+    <Staged className="mu-section">
       <Title>SYSTEMS</Title>
       <Typewriter text="CAPABILITIES ON RECORD" tone="dim" cps={240} />
       {skills.map((g) => (
@@ -172,13 +265,13 @@ export function SystemsSection(): React.ReactElement {
           </div>
         </div>
       ))}
-    </div>
+    </Staged>
   )
 }
 
 export function QuartersSection(): React.ReactElement {
   return (
-    <div className="mu-pad" style={{ padding: 0 }}>
+    <Staged className="mu-section">
       <Title>CREW QUARTERS</Title>
       <Typewriter text="OFF-DUTY RECORD" tone="dim" cps={240} />
       <Typewriter text={personal.intro} />
@@ -212,13 +305,13 @@ export function QuartersSection(): React.ReactElement {
           ))}
         </>
       ) : null}
-    </div>
+    </Staged>
   )
 }
 
 export function TransmitSection(): React.ReactElement {
   return (
-    <div className="mu-pad" style={{ padding: 0 }}>
+    <Staged className="mu-section">
       <Title>TRANSMIT</Title>
       <Typewriter text="OPENING CHANNEL..." tone="dim" cps={240} />
       {transmissions.channels.map((c) => (
@@ -238,7 +331,7 @@ export function TransmitSection(): React.ReactElement {
         />
       ))}
       <Typewriter text={transmissions.signoff} tone="caution" />
-    </div>
+    </Staged>
   )
 }
 

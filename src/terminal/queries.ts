@@ -107,37 +107,74 @@ export function resolvePath(raw: string): string | undefined {
 export interface Suggestion {
   name: string
   hint: string
+  group: 'query' | 'log' | 'command' | 'easter'
 }
 
-/** Everything the visible auto-complete offers, in discovery order. */
-const SUGGESTABLE: Array<Suggestion> = [
-  ...QUERIES.map((q) => ({ name: q.name, hint: q.hint })),
-  { name: 'HELP', hint: 'list all commands' },
-  { name: 'ASK', hint: 'ask MOTHER a question' },
+/** Service-log sub-queries, one per employer. */
+const EMPLOYERS: Array<{ key: string; label: string }> = [
+  { key: 'BATTLEFY', label: 'Battlefy' },
+  { key: 'THEREFORE', label: 'Therefore Interactive' },
+  { key: 'RC', label: 'RC Design' },
+  { key: 'STEELSERIES', label: 'SteelSeries' },
 ]
 
-function queryMatches(q: Query, c: string): boolean {
-  return q.name.startsWith(c) || (q.aliases ?? []).some((a) => a.startsWith(c))
+/** Every command the visible auto-complete offers, grouped for discovery. */
+const SUGGESTABLE: Array<Suggestion> = [
+  ...QUERIES.map((q) => ({
+    name: q.name,
+    hint: q.hint,
+    group: 'query' as const,
+  })),
+  ...EMPLOYERS.map((e) => ({
+    name: `LOG ${e.key}`,
+    hint: `service log — ${e.label}`,
+    group: 'log' as const,
+  })),
+  { name: 'HELP', hint: 'list all commands', group: 'command' },
+  { name: 'ASK', hint: 'ask MOTHER a question', group: 'command' },
+  { name: 'CLEAR', hint: 'clear the output log', group: 'command' },
+  { name: 'DOWNLOAD', hint: 'download the resume PDF', group: 'command' },
+  {
+    name: 'SPECIAL ORDER 937',
+    hint: 'science officer eyes only',
+    group: 'easter',
+  },
+  { name: 'JONESY', hint: "the ship's cat", group: 'easter' },
+  { name: 'ROLL D20', hint: 'roll the dice', group: 'easter' },
+  {
+    name: "WHAT'S THE STORY MOTHER",
+    hint: 'emergency destruct',
+    group: 'easter',
+  },
+]
+
+function aliasesFor(name: string): Array<string> {
+  return QUERIES.find((q) => q.name === name)?.aliases ?? []
+}
+
+function matchesInput(s: Suggestion, c: string): boolean {
+  if (s.name.startsWith(c)) return true
+  if (s.name.split(' ').some((w) => w.startsWith(c))) return true
+  return aliasesFor(s.name).some((a) => a.startsWith(c))
 }
 
 /**
  * Suggestions for the visible auto-complete. Empty input shows the full set
- * (so commands are discoverable, not hidden); typing filters by name or alias.
+ * (so commands are discoverable, not hidden); typing filters by name, word or alias.
  */
-export function suggest(input: string, limit = 8): Array<Suggestion> {
+export function suggest(input: string, limit = 40): Array<Suggestion> {
   const c = input.trim().toUpperCase()
   if (!c) return SUGGESTABLE.slice(0, limit)
-  const aliasHits = new Set(
-    QUERIES.filter((q) => queryMatches(q, c)).map((q) => q.name),
-  )
-  return SUGGESTABLE.filter(
-    (s) => s.name.startsWith(c) || aliasHits.has(s.name),
-  ).slice(0, limit)
+  return SUGGESTABLE.filter((s) => matchesInput(s, c)).slice(0, limit)
 }
 
-/** Longest common command completion for Tab. */
+/** First matching command for Tab completion. */
 export function complete(input: string): string | undefined {
   const c = input.trim().toUpperCase()
   if (!c) return undefined
-  return COMPLETIONS.map((n) => n.trim()).find((n) => n.startsWith(c))
+  const names = [
+    ...SUGGESTABLE.map((s) => s.name),
+    ...QUERIES.flatMap((q) => q.aliases ?? []),
+  ]
+  return names.find((n) => n.startsWith(c))
 }

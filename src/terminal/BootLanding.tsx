@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { ProgressBar, Typewriter } from '../components/muthur'
+import { ProgressBar, Staged, Typewriter } from '../components/muthur'
 import { profile } from '../content'
 
 /** Boot check bars: full on SSR / no-JS, then re-fill on the client. */
@@ -36,7 +36,7 @@ function BootBars(): React.ReactElement {
 
 export function BootLanding(): React.ReactElement {
   return (
-    <div className="mu-boot">
+    <Staged className="mu-boot" gap={280}>
       <Typewriter
         text="INTERFACE 2037 READY FOR INQUIRY"
         tone="dim"
@@ -64,6 +64,6 @@ export function BootLanding(): React.ReactElement {
         tone="dim"
         cps={240}
       />
-    </div>
+    </Staged>
   )
 }
