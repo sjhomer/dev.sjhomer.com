@@ -69,6 +69,9 @@
   flex: 1;
   min-height: 0;
   overflow-y: scroll;
+  /* Guard: never let the output pan sideways (an unset overflow-x would
+     otherwise coerce to auto and fight the mobile pager/nav). */
+  overflow-x: hidden;
   scrollbar-gutter: stable;
   scrollbar-color: var(--phosphor-dim) var(--crt-void);
   align-content: start;
@@ -586,7 +589,49 @@
   display: none;
 }
 
+/* Mobile pager: two labelled prev/next buttons that replace swipe nav.
+   Hidden on desktop (the numbered menu covers it); shown at phone widths. */
+.mu-pager {
+  display: none;
+}
+.mu-pager-btn {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  padding: var(--space-2);
+  border: 1px solid var(--phosphor-dim);
+  background: transparent;
+  color: var(--phosphor);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.mu-pager-prev {
+  justify-content: flex-start;
+}
+.mu-pager-next {
+  justify-content: flex-end;
+}
+.mu-pager-btn:hover,
+.mu-pager-btn:focus-visible {
+  border-color: var(--phosphor);
+  background: var(--phosphor-faint);
+}
+
 @media (max-width: 640px) {
+  .mu-pager {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
   .mu-console {
     padding: var(--space-2) var(--space-3);
     gap: var(--space-2);
@@ -626,9 +671,28 @@
     font-size: 48px;
   }
   .mu-type,
-  .mu-log-item span,
-  .mu-datarow-value {
+  .mu-log-item span {
     overflow-wrap: anywhere;
+  }
+  /* Datarows stack on phones so long URLs wrap cleanly instead of forcing a
+     sideways scroll; the dotted lead is a desktop affordance, so drop it. */
+  .mu-datarow {
+    flex-direction: column;
+    gap: 0;
+  }
+  .mu-datarow-lead {
+    display: none;
+  }
+  .mu-datarow-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+    text-align: left;
+  }
+  /* Trim the suggestions list on phones: the per-employer LOG filters are
+     desktop power-tools; typing `LOG <term>` still works. */
+  .mu-suggest-item[data-group='log'] {
+    display: none;
   }
 }
 

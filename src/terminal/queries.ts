@@ -95,6 +95,32 @@ export const COMPLETIONS: Array<string> = [
 
 export const MENU = QUERIES.filter((q) => q.index && !q.offMenu)
 
+export interface PageLink {
+  path: string
+  name: string
+}
+
+/** The six primary pages in menu order — the sequence the mobile pager walks. */
+export const PAGE_ORDER: Array<PageLink> = MENU.map((q) => ({
+  path: q.path as string,
+  name: q.name,
+}))
+
+/**
+ * Previous/next page for the mobile pager, wrapping at both ends. The landing
+ * ('/') and any off-menu route sit before the first page: next → the first
+ * page (Dossier), prev → the last (Transmit).
+ */
+export function pageNav(pathname: string): { prev: PageLink; next: PageLink } {
+  const n = PAGE_ORDER.length
+  const i = PAGE_ORDER.findIndex((p) => p.path === pathname)
+  if (i === -1) return { prev: PAGE_ORDER[n - 1], next: PAGE_ORDER[0] }
+  return {
+    prev: PAGE_ORDER[(i - 1 + n) % n],
+    next: PAGE_ORDER[(i + 1) % n],
+  }
+}
+
 /** Resolve a raw command to a routable query (by name or alias), else undefined. */
 export function resolvePath(raw: string): string | undefined {
   const c = raw.trim().toUpperCase().replace(/\s+/g, ' ')

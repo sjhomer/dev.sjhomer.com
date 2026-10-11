@@ -9,22 +9,12 @@ import {
   TypeSequence,
 } from '../components/muthur'
 import type { Line } from '../components/muthur'
-import { MENU, complete, resolvePath, suggest } from './queries'
+import { MENU, complete, pageNav, resolvePath, suggest } from './queries'
 import { askLines, jonesyLines, rollLines, specialOrderLines } from './eggs'
 import { audio, autoplayLikely, nextLevel } from './audio'
 import type { SoundLevel } from './audio'
 import { SoundGate } from './SoundGate'
 import './console.css'
-
-/** Query order for mobile swipe navigation. */
-const SWIPE_ORDER = [
-  '/dossier',
-  '/log',
-  '/missions',
-  '/systems',
-  '/quarters',
-  '/transmit',
-]
 
 const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
 const PALETTE_NAMES: Record<string, string> = {
@@ -112,7 +102,6 @@ export function Console({
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const outRef = useRef<HTMLDivElement>(null)
-  const touch = useRef<{ x: number; y: number } | null>(null)
 
   // Apply saved palette / effects imperatively (outside React, no hydration clash).
   useEffect(() => {
@@ -458,26 +447,10 @@ export function Console({
     }
   }
 
-  function onTouchStart(e: React.TouchEvent) {
-    const t = e.touches[0]
-    touch.current = { x: t.clientX, y: t.clientY }
-  }
-  function onTouchEnd(e: React.TouchEvent) {
-    if (!touch.current) return
-    const t = e.changedTouches[0]
-    const dx = t.clientX - touch.current.x
-    const dy = t.clientY - touch.current.y
-    touch.current = null
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-    const idx = SWIPE_ORDER.indexOf(pathname)
-    const len = SWIPE_ORDER.length
-    let next: number
-    if (idx === -1) next = dx < 0 ? 0 : len - 1
-    else next = dx < 0 ? (idx + 1) % len : (idx - 1 + len) % len
-    navigate({ to: SWIPE_ORDER[next] })
-  }
-
   const suggestions = focused || value.trim() ? suggest(value) : []
+  // Mobile pager targets (the numbered menu is hidden on phones). Landing sits
+  // before the first page: prev → Transmit, next → Dossier.
+  const pager = pageNav(pathname)
 
   return (
     <section
@@ -532,8 +505,6 @@ export function Console({
 
       <div
         className="mu-screen mu-screen-flicker mu-console-screen"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
         inert={showGate}
       >
         <div
@@ -680,10 +651,26 @@ export function Console({
               <KeyCap>↑</KeyCap> history
               <KeyCap>Esc</KeyCap> home
             </div>
-            <p className="mu-term-hints mu-hints-mobile" aria-hidden="true">
-              <span className="mu-swipe">⇠ swipe ⇢</span> to move between
-              queries · tap the line to type a command
-            </p>
+            <nav className="mu-pager" aria-label="Page navigation">
+              <button
+                type="button"
+                className="mu-pager-btn mu-pager-prev"
+                onClick={() => navigate({ to: pager.prev.path })}
+                aria-label={`Previous page: ${pager.prev.name}`}
+              >
+                <span aria-hidden="true">◂ </span>
+                {pager.prev.name}
+              </button>
+              <button
+                type="button"
+                className="mu-pager-btn mu-pager-next"
+                onClick={() => navigate({ to: pager.next.path })}
+                aria-label={`Next page: ${pager.next.name}`}
+              >
+                {pager.next.name}
+                <span aria-hidden="true"> ▸</span>
+              </button>
+            </nav>
           </div>
         ) : null}
       </div>
