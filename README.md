@@ -26,12 +26,15 @@ over a normal site.
 
 ```sh
 pnpm install        # Node >= 22 (see .nvmrc), pnpm (see packageManager)
-pnpm dev            # http://localhost:3000
+pnpm dev            # http://localhost:9370
 ```
+
+Ports nod to **Special Order 937**: dev on `9370`, Playwright on `9371`
+(override with `E2E_PORT`). Both stay clear of the usual `3000`.
 
 | Command                | What it does                                  |
 | ---------------------- | --------------------------------------------- |
-| `pnpm dev`             | Dev server (SSR) on port 3000                 |
+| `pnpm dev`             | Dev server (SSR) on port 9370                 |
 | `pnpm build`           | Production build                              |
 | `pnpm preview`         | Preview the production build                  |
 | `pnpm typecheck`       | `tsc --noEmit`                                |
