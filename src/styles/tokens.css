@@ -1,0 +1,166 @@
+/*
+ * MU/TH/UR Interface — design tokens
+ * Generated from the "MU/TH/UR Interface" design system (tokens.json, v1).
+ * Source of truth: https://claude.ai/artifact/GYGeuTYWULwzuEnYEneaZU
+ *
+ * Three palettes share one set of names:
+ *   mother      (green)  — default
+ *   sevastopol  (amber)  — alternate, unlocked by the Konami code
+ *   hardcopy    (print)  — used by /cv, every effect off
+ * Palette is selected with [data-palette] on <html>; mother is :root default.
+ * Non-colour tokens (type, spacing, radius, cadence, layout) are palette-invariant.
+ */
+
+:root {
+  /* ---- Colour (mother / green, default) ---- */
+  --crt-void: #020a04; /* page ground behind every screen */
+  --crt-panel: #051a0c; /* lit glass inside a Screen */
+  --phosphor: #4dff88; /* primary text, cursor, inverse fills */
+  --phosphor-dim: #2fb35a; /* secondary text: hints, dates, echoed commands */
+  --phosphor-faint: #124d26; /* decoration only: hairlines, leaders, bezel (<3:1) */
+  --on-phosphor: #020a04; /* text on an inverse fill */
+  --alert: #ff4f3f; /* self-destruct, errors, access denied — always with a word */
+  --caution: #ffd23f; /* the one value worth noticing first; metrics */
+  --focus: var(
+    --caution
+  ); /* keyboard focus ring (differs from phosphor in lightness + hue) */
+  --scanline: rgba(
+    0,
+    0,
+    0,
+    0.3
+  ); /* 1px line repeated every 3px over a Screen */
+  --vignette: rgba(0, 0, 0, 0.6); /* edge darkening of a Screen's glass */
+
+  /* ---- Glow / shadow (mother) ---- */
+  --glow-sm: 0 0 4px rgba(77, 255, 136, 0.55); /* default bloom on all phosphor text */
+  --glow-lg: 0 0 14px rgba(77, 255, 136, 0.45); /* display type, metric numbers */
+  --glow-alert: 0 0 8px rgba(255, 79, 63, 0.6); /* alert text and borders */
+  --bezel: inset 0 0 48px rgba(0, 0, 0, 0.7); /* inner shadow curving a Screen's glass */
+
+  /* ---- Type families ---- */
+  --font-display: VT323, 'Courier New', monospace;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  /* ---- Type scale (size / line-height / weight / tracking) ---- */
+  --display-xl-size: 88px;
+  --display-xl-line: 0.95;
+  --display-xl-weight: 400;
+  --display-xl-track: 0.02em;
+
+  --display-l-size: 56px;
+  --display-l-line: 1;
+  --display-l-weight: 400;
+  --display-l-track: 0.02em;
+
+  --metric-size: 64px;
+  --metric-line: 0.95;
+  --metric-weight: 400;
+
+  --heading-size: 32px;
+  --heading-line: 1.1;
+  --heading-weight: 400;
+  --heading-track: 0.04em;
+
+  --body-size: 16px;
+  --body-line: 26px;
+  --body-weight: 400;
+  --body-strong-weight: 600;
+
+  --log-size: 15px;
+  --log-line: 24px;
+
+  --caption-size: 13px;
+  --caption-line: 20px;
+
+  --label-size: 12px;
+  --label-line: 20px;
+  --label-weight: 500;
+  --label-track: 0.12em;
+
+  /* ---- Spacing (4px grid) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* ---- Radius ---- */
+  --radius-none: 0;
+  --radius-key: 2px;
+  --radius-bezel: 24px;
+
+  /* ---- Cadence (typewriter + boot; read by the terminal engine) ---- */
+  --cps-prose: 90;
+  --cps-log: 240;
+  --pause-line: 120ms;
+  --pause-block: 400ms;
+  --cursor-blink: 1060ms;
+  --boot-length: 4000ms;
+
+  /* ---- Layout ---- */
+  --measure: 72ch;
+  --screen-max: 880px;
+
+  /* ---- Opacity ---- */
+  --flicker-depth: 0.97;
+
+  color-scheme: dark;
+}
+
+/* ---- Sevastopol (amber) ---- */
+[data-palette='sevastopol'] {
+  --crt-void: #0b0702;
+  --crt-panel: #1a1004;
+  --phosphor: #ffb43a;
+  --phosphor-dim: #c27f12;
+  --phosphor-faint: #54360a;
+  --on-phosphor: #0b0702;
+  --alert: #ff5a3c;
+  --caution: #fff1a8;
+  --glow-sm: 0 0 4px rgba(255, 180, 58, 0.5);
+  --glow-lg: 0 0 14px rgba(255, 180, 58, 0.4);
+  --glow-alert: 0 0 8px rgba(255, 90, 60, 0.6);
+  color-scheme: dark;
+}
+
+/* ---- Hardcopy (print) — every effect off ---- */
+[data-palette='hardcopy'] {
+  --crt-void: #f1eee4;
+  --crt-panel: #fbfaf5;
+  --phosphor: #14251a;
+  --phosphor-dim: #4c5e51;
+  --phosphor-faint: #cfcabb;
+  --on-phosphor: #fbfaf5;
+  --alert: #b3261e;
+  --caution: #7d5800;
+  --scanline: rgba(0, 0, 0, 0);
+  --vignette: rgba(0, 0, 0, 0);
+  --glow-sm: none;
+  --glow-lg: none;
+  --glow-alert: none;
+  --bezel: none;
+  color-scheme: light;
+}
+
+/*
+ * Effects off: a visible toggle ([data-fx="off"]) and prefers-reduced-motion
+ * both drop the glows, scanline and vignette. Motion itself (typing, flicker,
+ * blink) collapses to instant in the engine / component CSS.
+ */
+[data-fx='off'] {
+  --scanline: rgba(0, 0, 0, 0);
+  --vignette: rgba(0, 0, 0, 0);
+  --glow-sm: none;
+  --glow-lg: none;
+  --glow-alert: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --scanline: rgba(0, 0, 0, 0);
+    --vignette: rgba(0, 0, 0, 0);
+  }
+}

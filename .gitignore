@@ -369,3 +369,25 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/node
 
+
+# --- TanStack Start / Vite / Cloudflare (appended during scaffold) ---
+dist-ssr
+*.local
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+# Generated route tree
+src/routeTree.gen.ts
+
+# --- Playwright ---
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# JetBrains IDE (project-wide)
+.idea/
