@@ -391,6 +391,30 @@
   }
 }
 
+/* Easter-egg mode: the terminal becomes a playground; the page is restored on
+ * navigation or via Reset terminal. */
+.mu-egg {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+.mu-reset {
+  justify-self: start;
+  font: 500 12px/20px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--caution);
+  background: none;
+  border: 1px solid var(--caution);
+  border-radius: var(--radius-none);
+  padding: 0 var(--space-2);
+  cursor: pointer;
+}
+.mu-reset:hover {
+  background: var(--caution);
+  color: var(--on-phosphor);
+}
+
 /* Command error, shown by the prompt (never in the dimmed output). */
 .mu-prompt-error {
   margin: 0;

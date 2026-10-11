@@ -130,9 +130,7 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: `service log — ${e.label}`,
     group: 'log' as const,
   })),
-  { name: 'HELP', hint: 'list all commands', group: 'command' },
   { name: 'ASK', hint: 'ask MOTHER a question', group: 'command' },
-  { name: 'CLEAR', hint: 'clear the output log', group: 'command' },
   { name: 'DOWNLOAD', hint: 'download the resume PDF', group: 'command' },
   {
     name: 'SPECIAL ORDER 937',

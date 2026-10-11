@@ -10,13 +10,7 @@ import {
 } from '../components/muthur'
 import type { Line } from '../components/muthur'
 import { MENU, complete, resolvePath, suggest } from './queries'
-import {
-  askLines,
-  helpLines,
-  jonesyLines,
-  rollLines,
-  specialOrderLines,
-} from './eggs'
+import { askLines, jonesyLines, rollLines, specialOrderLines } from './eggs'
 import './console.css'
 
 /** Query order for mobile swipe navigation. */
@@ -71,6 +65,7 @@ export function Console({
   const [focused, setFocused] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
   const [error, setError] = useState('')
+  const [eggMode, setEggMode] = useState(false)
 
   const nextId = useRef(1)
   const hist = useRef<Array<string>>([])
@@ -115,10 +110,27 @@ export function Console({
     return () => clearInterval(t)
   }, [])
 
-  // Each query page starts scrolled to its top (no retained scroll, no jump).
+  // Navigating anywhere exits easter-egg mode and reloads the static content
+  // fresh (with its animations), scrolled to the top.
   useEffect(() => {
+    setEggMode(false)
+    setLog([])
+    setDestruct(null)
+    try {
+      delete document.body.dataset.alarm
+    } catch {
+      /* no document */
+    }
     outRef.current?.scrollTo({ top: 0 })
   }, [pathname])
+
+  function resetTerminal() {
+    setEggMode(false)
+    setLog([])
+    setDestruct(null)
+    delete document.body.dataset.alarm
+    setError('')
+  }
 
   // Self-destruct countdown.
   useEffect(() => {
@@ -246,7 +258,7 @@ export function Console({
     setError('')
 
     if (cmd === 'CLEAR') {
-      setLog([])
+      resetTerminal()
       return true
     }
 
@@ -258,9 +270,6 @@ export function Console({
 
     if (cmd === 'DOWNLOAD') {
       window.open('/sjhomer-resume.pdf', '_blank', 'noopener')
-      print(cmd, [
-        { text: 'TRANSMITTING RESUME.PDF...', tone: 'dim', cps: 240 },
-      ])
       return true
     }
 
@@ -270,27 +279,30 @@ export function Console({
       return true
     }
 
-    if (cmd === 'HELP' || cmd === 'MENU') {
-      print(cmd, helpLines())
-      return true
-    }
+    // Easter eggs take over the terminal (clearing the static page); any combo
+    // can run, and navigating or RESET TERMINAL restores the page.
     if (cmd === 'JONESY') {
+      setEggMode(true)
       print(cmd, jonesyLines())
       return true
     }
     if (cmd.startsWith('ROLL')) {
+      setEggMode(true)
       print(cmd, rollLines(cmd.slice(4).trim()))
       return true
     }
     if (cmd.startsWith('ASK')) {
+      setEggMode(true)
       print(cmd, askLines(cmd.slice(3).trim()))
       return true
     }
     if (cmd === 'SPECIAL ORDER 937') {
+      setEggMode(true)
       print(cmd, specialOrderLines())
       return true
     }
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
+      setEggMode(true)
       document.body.dataset.alarm = ''
       setDestruct(10)
       print(cmd, [
@@ -302,6 +314,7 @@ export function Console({
       return true
     }
     if (cmd === 'OVERRIDE') {
+      setEggMode(true)
       if (destruct != null) {
         delete document.body.dataset.alarm
         setDestruct(null)
@@ -320,7 +333,7 @@ export function Console({
       return true
     }
 
-    setError(`UNABLE TO COMPUTE. QUERY "${cmd}" NOT RECOGNISED — TYPE HELP.`)
+    setError(`UNABLE TO COMPUTE. QUERY "${cmd}" NOT RECOGNISED.`)
     return false
   }
 
@@ -410,26 +423,36 @@ export function Console({
         onTouchEnd={onTouchEnd}
       >
         <div className="mu-screen-body mu-console-out" ref={outRef}>
-          {children}
-
-          {log.map((b) => (
-            <div key={b.id} className="mu-console-block">
-              {b.echo ? (
-                <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
+          {eggMode ? (
+            <div className="mu-egg">
+              <button
+                type="button"
+                className="mu-reset"
+                onClick={resetTerminal}
+              >
+                ↺ Reset terminal
+              </button>
+              {log.map((b) => (
+                <div key={b.id} className="mu-console-block">
+                  {b.echo ? (
+                    <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
+                  ) : null}
+                  <TypeSequence lines={b.lines} />
+                </div>
+              ))}
+              {destruct != null ? (
+                <Alert title="Emergency destruct">
+                  <p>THE OPTION TO OVERRIDE AUTOMATIC DESTRUCT EXPIRES IN</p>
+                  <p className="mu-countdown">
+                    T-MINUS 00:{String(Math.max(0, destruct)).padStart(2, '0')}
+                  </p>
+                  <p>TYPE OVERRIDE TO ABORT.</p>
+                </Alert>
               ) : null}
-              <TypeSequence lines={b.lines} />
             </div>
-          ))}
-
-          {destruct != null ? (
-            <Alert title="Emergency destruct">
-              <p>THE OPTION TO OVERRIDE AUTOMATIC DESTRUCT EXPIRES IN</p>
-              <p className="mu-countdown">
-                T-MINUS 00:{String(Math.max(0, destruct)).padStart(2, '0')}
-              </p>
-              <p>TYPE OVERRIDE TO ABORT.</p>
-            </Alert>
-          ) : null}
+          ) : (
+            children
+          )}
         </div>
 
         {!isHardcopy ? (
@@ -500,7 +523,7 @@ export function Console({
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               inputRef={inputRef}
-              placeholder="Type a query, or HELP"
+              placeholder="Type a query, or a command"
               label="Query MOTHER"
             />
             {error ? (
