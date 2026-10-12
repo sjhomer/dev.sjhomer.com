@@ -1,149 +1,149 @@
-# dev.sjhomer.com — a portfolio that boots like the Nostromo
+# dev.sjhomer.com — a career you boot like the Nostromo
 
 > **PERSONNEL FILE: HOMER, S.J. — CLEARANCE: COMMAND**
 
-[dev.sjhomer.com](https://dev.sjhomer.com) is a developer portfolio disguised as
-the **MU/TH/UR 6000**, the ship's computer from *Alien*. You don't scroll a
+[dev.sjhomer.com](https://dev.sjhomer.com) is a developer portfolio in the shape
+of the **MU/TH/UR 6000**, the ship's computer from *Alien*. You don't scroll a
 résumé — you boot the mainframe, query the crew file, and the answers type back
-at you line by line in cold green phosphor. The terminal _is_ the navigation,
+at you line by line in cold green phosphor. The terminal *is* the navigation,
 not a chrome wrapped around a normal site.
 
-It's also a love letter. I grew up on science fiction, and the retro-futurist
-interfaces of the *Alien* franchise — the chunky amber readouts, the blinking
-cursors, MOTHER's clipped omniscient tone — are the most atmospheric computers
-ever put on film. This was an excuse to build one, and to showcase two decades
-of engineering work through it.
+This is a case study of how it came to be: a love of science fiction, one
+written plan, and a long run of iteration to get from that plan to something
+alive.
 
 ![The MU/TH/UR 6000 boot sequence](docs/media/boot.png)
 
-## The concept
+## The spark
 
-Everything is diegetic. The visitor is a crew member interrogating the ship's
-computer about officer **SJHOMER**:
+I grew up on science fiction, and nothing in it has aged better than the
+*computers*. The *Alien* franchise in particular treated its interfaces as
+characters: the chunky readouts, the unhurried cursors, MOTHER answering in
+clipped capitals while the Nostromo's crew argued around her. Those screens are
+some of the most atmospheric machines ever put on film, precisely because they
+are slow, deliberate, and a little ominous.
 
-- The **career** is a _service log_. **Case studies** are _missions_. **Skills**
-  are _systems_. **Life off-duty** is the _crew quarters_. **Contact** is a
-  _transmission channel_.
-- Six numbered queries (`1`–`6`) drive the whole site. Type a command, press a
-  number, or let MOTHER auto-complete — every route is real, shareable and
-  server-rendered underneath the theatre.
-- Three palettes ship: **`mother`** (Nostromo green), **`sevastopol`** (the
-  amber of *Alien: Isolation*'s doomed station) and **`hardcopy`** (a paper-white
-  print mode that powers the plain `/cv`).
-- A printable résumé lives at [`/cv`](https://dev.sjhomer.com/cv) for recruiters
-  who'd rather not play along — same typed content model, effects off.
+I wanted to build one — and to use it to talk about two decades of engineering
+work without reaching for yet another card grid. So before a line of product
+code existed, there was a document: a **solution plan** that imagined the whole
+thing as a terminal session. *The visitor plays a Nostromo crew member at the
+interface-room console. They boot the ship's computer and interrogate it for
+crew file `SJHOMER`.* That one framing decided everything that followed.
 
-## From three artifacts to a live ship
+The plan set four pillars, and they turned out to be load-bearing:
 
-The site was designed before a line of product code was written, as three
-linked concept artifacts — and those ideas largely survived to launch:
+- **Diegetic, not decorative.** Every section is a query and a response, so the
+  theme *is* the navigation rather than a skin over an ordinary page.
+- **Readable in ten seconds.** A recruiter who never types still gets a numbered
+  menu and a way to print the whole crew file instantly. Typing is a delight,
+  never a requirement.
+- **Content separate from presentation.** The career lives in typed data files;
+  the terminal only renders them. One source also becomes a plain `/cv`, the
+  JSON-LD, and a generated PDF — so nothing can drift out of sync.
+- **Restraint in the effects.** Green-on-black phosphor, scanlines and a slight
+  bloom, all tuned *low*, because people actually have to read this.
 
-1. **A solution plan** — stack, a typed content model, interaction design, and a
-   phased roadmap (Foundation → Terminal → Atmosphere → Ask MOTHER).
-2. **A design system, "MU/TH/UR Interface"** — a token set (the three palettes,
-   type scale, glow and scanline treatments) and ~15 component contracts.
-3. **An interactive mockup** — the full terminal UX to build against: boot,
-   menu, palette switching, the hardcopy `/cv`, and the easter eggs.
+## The idea that held: a computer you interrogate
 
-Getting from those to a live `v1` took a stacked series of changes — scaffold,
-content model, the component library, the terminal engine, atmosphere (CRT
-grain, scanlines, flicker), original audio, easter eggs, then a long tail of
-mobile and accessibility polish — each built, verified and reviewed in sequence
-before a consolidated go-live. The roadmap's later "Ask MOTHER" phase was
-deliberately re-scoped: rather than wire up an LLM, MOTHER stays **grounded, not
-generative** — `ASK` returns hand-authored, keyword-matched answers and is
-honest about it (`[ CANNED RESPONSE — MOTHER IS GROUNDED, NOT GENERATIVE ]`).
+The site answers to the same instincts a real terminal does. Three input modes
+run side by side: a **command line**, **numbered options** you can click or key,
+and ordinary **links** for screen readers and crawlers. Ask it a question and it
+replies in MOTHER's voice; the career becomes a thing you *interrogate* rather
+than a page you consume.
+
+Everything is framed in the fiction. The CV is a **service log**. Case studies
+are **missions**. Skills are **systems**. Life off-duty is the **crew quarters**.
+Contact is a **transmission channel**. The dossier opens with the professional
+pitch rendered as MOTHER's own summary of the officer — and the service record
+runs *2005 → present*, the year the career (and, not by accident, the ship's own
+countdown numbering) began.
 
 ![Querying the crew file](docs/media/dossier.png)
-*Querying the crew file — every answer types back line by line, with a reading-paced auto-scroll.*
+*Querying the crew file — every answer types back line by line, with a
+reading-paced auto-scroll.*
 
-## Easter eggs
+## What survived, and what changed
 
-Half the fun is what's _not_ on the menu. A few of the classified directives:
+The honest part of any build is the distance between the plan and the thing that
+ships. Much of the plan survived intact — the pillars, the content model, the
+three input modes, the phosphor palette, the progressive-enhancement spine. But
+the character of the site came from the places it *changed*, through iteration
+and a fair amount of stubbornness:
+
+- **MOTHER stayed grounded, not generative.** The plan left room for an "Ask
+  MOTHER" feature backed by a live LLM. It would have been the easy flex — but a
+  terminal that hallucinates its own crew's history is a worse terminal. So
+  `ASK` answers from hand-authored, keyword-matched responses and says so out
+  loud: *`[ CANNED RESPONSE — MOTHER IS GROUNDED, NOT GENERATIVE ]`*. Honesty,
+  in character.
+- **The engine was hand-rolled.** No `xterm.js` — that's built for real shells.
+  A small set of React primitives type content out character by character while
+  the *full* text already sits in the DOM, so every word stays selectable,
+  copyable, indexable, and readable without the animation ever running.
+- **The whole experience shipped at once.** The plan proposed a tidy four-phase
+  roadmap. In practice the terminal, atmosphere, audio and easter eggs wanted to
+  be built together — they only make sense as one piece — so the first release
+  was the *whole* MU/TH/UR, verified end to end and merged in one consolidated
+  go-live, with the domain cut over from the old site earlier than planned.
+- **The best parts weren't in the plan at all.** The analog **control knobs**
+  in the header, and the full **design manual** at `/guide`, were post-launch
+  additions — the kind of thing you only think to build once the machine is
+  running and you start treating it like an instrument.
+
+Nothing here was generated once and shipped. It was tuned — the cadence of the
+typing, the exact green, the weight of the bloom, the way a line *holds* before
+it morphs — until it felt like the screens I remembered.
+
+## Building it, line by line
+
+Under the theatre, the craft is ordinary and deliberate:
+
+- **One typed, Zod-validated content model** feeds the terminal, the printable
+  `/cv`, the structured data and the generated PDF. Adding the next role is a
+  one-file change, and the four Battlefy years missing from the legacy site
+  arrived simply by adding their entries.
+- **Progressive enhancement, genuinely.** Each route server-renders its full
+  text with its own title, description and Open Graph image; the terminal then
+  takes over the same page and replays it with the typing effect. Turn off
+  JavaScript and you still get the entire crew file.
+- **Atmosphere you can switch off.** The CRT layer — scanlines, a soft
+  `text-shadow` bloom, a flicker under three percent, a vignette — is all CSS,
+  and `prefers-reduced-motion` (or a visible toggle) collapses it to instant,
+  calm text. Three palettes share one set of tokens: **mother** green,
+  **sevastopol** amber, and a paper-white **hardcopy** for print.
+- **Original sound, off by default.** Every effect — the boot drone, the key
+  clicks, the danger klaxon, the self-destruct tick that rises in pitch — is
+  synthesised with the Web Audio API. No sampled or copyrighted film audio is
+  used anywhere. A one-time gate asks before anything ever plays.
+
+It rides on TanStack Start (React 19) at the edge on Cloudflare Workers, gated
+by unit and end-to-end tests, and it was built to a budget: full text and
+function with the animation turned off, and the heavy flourishes loaded only
+when a device can afford them.
+
+## The easter eggs
+
+Half the fun is what's *not* on the menu — cheap to add once the command
+registry exists, and impossible to resist:
 
 | Command | What happens |
 | --- | --- |
-| `SPECIAL ORDER 937` | The infamous order prints — "ensure return of organism… crew expendable" — then the cursor hangs and the line is amended, on-screen, to **CREW ESSENTIAL**. |
-| `WHAT'S THE STORY MOTHER` | Arms the **emergency destruct sequence**: a full-screen countdown with a tick that rises in pitch. Type `OVERRIDE` to abort before it reaches zero. |
-| `ROLL D20` | Rolls the dice. A natural 1 trips the **danger klaxon**; a natural 20 sounds the **all-clear**. |
+| `SPECIAL ORDER 937` | The infamous directive prints — *"ensure return of organism… crew expendable"* — then the cursor hangs, and the last line is amended, on screen, to **CREW ESSENTIAL**. |
+| `WHAT'S THE STORY MOTHER` | Arms the **emergency destruct sequence**: a full-screen countdown with a tick that climbs in pitch. Type `OVERRIDE` to abort before it reaches zero. |
+| `ROLL D20` | Rolls the dice, a nod to a lifelong love of tabletop RPGs. A natural 1 trips the **danger klaxon**; a natural 20 sounds the **all-clear**. |
 | `JONESY` | The ship's cat is accounted for. |
-| `DEBUG` | A tongue-in-cheek self-diagnostic that reads real live values (viewport, palette, uptime) and wraps them in Nostromo flavour. |
+| `DEBUG` | A tongue-in-cheek self-diagnostic that reads real live values — viewport, palette, uptime — and wraps them in Nostromo flavour. |
 | `SOUND BOARD` | A playable board of every sound effect, revealed one pad at a time. |
-| `↑ ↑ ↓ ↓ …` | The Konami code flips the palette to **Sevastopol**: *"PALETTE OVERRIDE ACCEPTED. WELCOME TO SEVASTOPOL STATION."* |
-
-Every sound is **original synthesis** — boot drones, key clicks, the klaxon, the
-countdown tick — authored with the Web Audio API via Howler. No sampled or
-copyrighted film audio is used.
+| `↑ ↑ ↓ ↓ …` | The Konami code flips the palette to **Sevastopol** amber: *"PALETTE OVERRIDE ACCEPTED. WELCOME TO SEVASTOPOL STATION."* |
 
 ![SPECIAL ORDER 937 amended on screen](docs/media/special-order-937.png)
 
-## Under the hood
-
-- **[TanStack Start](https://tanstack.com/start)** (React 19, Vite) — file-based
-  routes, SSR + prerender, server functions. The terminal is
-  progressively-enhanced: it renders complete on the server, then comes alive on
-  the client.
-- A **hand-rolled terminal engine** — a small set of self-timing primitives
-  (`Typewriter` / `TypeSequence` / `Staged`) that type content line by line at
-  per-line speeds, with holds, pauses and mid-line "morphs".
-- A **typed content model** (`src/content/*`, Zod-validated): one source of truth
-  feeds the terminal, `/cv`, JSON-LD and the generated PDF/OG images.
-- **CSS custom-property design tokens** (Tailwind v4) for the three palettes —
-  phosphor colour, glow, scanlines, caution amber, alert red.
-- Self-hosted **VT323** and **IBM Plex Mono** (both OFL).
-- **Cloudflare Workers** via GitHub Actions; **Vitest** (unit) + **Playwright**
-  (end-to-end) gate every change.
-
-## Run it locally
-
-```sh
-pnpm install        # Node >= 22 (see .nvmrc)
-pnpm dev            # http://localhost:9370
-```
-
-Ports nod to **Special Order 937**: dev on `9370`, Playwright on `9371`
-(override with `E2E_PORT`).
-
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Dev server (SSR) on port 9370 |
-| `pnpm build` | Production build |
-| `pnpm preview` | Preview the production build |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm lint` | ESLint |
-| `pnpm check` / `pnpm format` | Prettier check / write + `eslint --fix` |
-| `pnpm test` | Vitest (unit) |
-| `pnpm test:e2e` | Playwright (boots the dev server) |
-| `pnpm generate:assets` | Regenerate the PDF résumé + per-route OG images |
-
-### Project layout
-
-```
-src/
-  routes/           file-based routes (__root.tsx shell, the six queries, /cv)
-  terminal/         the terminal engine, console, queries, easter eggs, audio
-  components/muthur/ the MU/TH/UR Interface component library
-  content/          typed, Zod-validated content collections
-  styles/           fonts + the MU/TH/UR design tokens
-e2e/                Playwright specs
-.github/workflows/  CI (verify + deploy)
-```
-
-## Deploy
-
-CI (`.github/workflows/ci.yml`) runs lint, typecheck, format, unit and e2e tests
-and the build on every PR. On merge to `main` it runs `pnpm run deploy`
-(`vite build` + `wrangler deploy`) to Cloudflare Workers. The deploy job is
-gated on two repository secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
-the `verify` job runs without them. **Production is
-[`https://dev.sjhomer.com`](https://dev.sjhomer.com)** — a Cloudflare Workers
-custom domain; PRs get their own per-version preview URL.
-
 ## Colophon
 
-Fonts **VT323** and **IBM Plex Mono** under the SIL Open Font License. *Alien*,
-the Nostromo, MU/TH/UR and Sevastopol Station are the creations of their
-respective rights holders; this is an unaffiliated fan tribute and personal
-portfolio. All sound effects are original.
+A personal project, and a love letter. Fonts **VT323** and **IBM Plex Mono**
+under the SIL Open Font License. *Alien*, the Nostromo, MU/TH/UR and Sevastopol
+Station are the creations of their respective rights holders; this is an
+unaffiliated fan tribute and personal portfolio, and every sound in it is
+original.
 
 — built by [S.J. Homer](https://dev.sjhomer.com). Query `TRANSMIT` to open a channel.
