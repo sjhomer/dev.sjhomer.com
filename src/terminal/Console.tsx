@@ -107,20 +107,31 @@ function ShipClock(): React.ReactElement {
   )
 }
 
-/** One row in the command palette. `data-group` drives the per-group styling. */
+/** One row in the command palette. `data-group` drives the per-group styling;
+ *  `active` marks the row the arrow keys have highlighted. */
 function SuggestItem({
   suggestion,
   onPick,
+  active = false,
 }: {
   suggestion: Suggestion
   onPick: (name: string) => void
+  active?: boolean
 }): React.ReactElement {
+  const ref = useRef<HTMLButtonElement>(null)
+  // Keep the highlighted row in view as the arrows walk a longer listing.
+  useEffect(() => {
+    if (active) ref.current?.scrollIntoView({ block: 'nearest' })
+  }, [active])
   return (
     <li>
       <button
+        ref={ref}
         type="button"
         className="mu-suggest-item"
         data-group={suggestion.group}
+        data-active={active || undefined}
+        aria-current={active || undefined}
         // preventDefault on mousedown keeps the input focused (so the panel
         // doesn't close before activation); onClick fires for both pointer and
         // keyboard (Enter/Space), so the item is keyboard-operable.
@@ -167,6 +178,9 @@ export function Console({
   const [destructAborted, setDestructAborted] = useState(false)
   const [abortStep, setAbortStep] = useState(0)
   const [focused, setFocused] = useState(false)
+  // Highlighted row within the (visually ordered) suggestion listing while it is
+  // navigated with the arrow keys; -1 means "typing freely, not in the list".
+  const [activeIndex, setActiveIndex] = useState(-1)
   // Mobile: the prompt is a button that opens the command picker (no typing).
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
@@ -187,6 +201,9 @@ export function Console({
   const hist = useRef<Array<string>>([])
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
+  // What the visitor had typed before stepping into the suggestion listing with
+  // the arrows, so ArrowUp past the top (or Escape) can put it back.
+  const typedBeforeNav = useRef('')
   const outRef = useRef<HTMLDivElement>(null)
   // Live mirrors for the once-bound global key handler (which must not re-bind
   // every render — that would reset the Konami progress each keystroke).
@@ -673,16 +690,75 @@ export function Console({
   // Keep the global key handler's view of run() current without re-binding it.
   runRef.current = run
 
+  // Show the command list when the desktop input is focused/filtering, or when
+  // the mobile picker button has been tapped (mobile has no text input).
+  // While the arrows are walking the listing the input mirrors the highlighted
+  // row, so filter by what the visitor actually typed (held in typedBeforeNav),
+  // not by the mirrored value — otherwise the list would collapse to one row
+  // and the highlight could never move past it.
+  const filterQuery = activeIndex >= 0 ? typedBeforeNav.current : value
+  const suggestions =
+    focused || value.trim() || pickerOpen ? suggest(filterQuery) : []
+  // The listing renders in grouped visual order (commands → design manual →
+  // restricted), so the arrow-key highlight walks that same flattened order.
+  const ordered = [
+    ...suggestions.filter((q) => q.group === 'query' || q.group === 'command'),
+    ...suggestions.filter((q) => q.group === 'manual'),
+    ...suggestions.filter((q) => q.group === 'easter'),
+  ]
+  // Name of the highlighted row (if any) — items match on this, so no index has
+  // to be threaded through the three grouped sections.
+  const activeName =
+    activeIndex >= 0 && activeIndex < ordered.length
+      ? ordered[activeIndex].name
+      : null
+
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'ArrowUp' && hist.current.length) {
+    // With the panel open, the arrows drive a highlight through the listing and
+    // mirror it into the input (so Enter simply submits the highlighted name);
+    // with the panel closed they page through command history as before.
+    const panelOpen = ordered.length > 0
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
-      histPos.current = Math.min(histPos.current + 1, hist.current.length - 1)
-      setValue(hist.current[histPos.current])
-    } else if (e.key === 'ArrowDown') {
+      if (panelOpen) {
+        if (activeIndex < 0) typedBeforeNav.current = value
+        const next =
+          activeIndex < 0 ? 0 : Math.min(activeIndex + 1, ordered.length - 1)
+        setActiveIndex(next)
+        setValue(ordered[next].name)
+      } else {
+        histPos.current = Math.max(histPos.current - 1, -1)
+        setValue(histPos.current < 0 ? '' : hist.current[histPos.current])
+      }
+      return
+    }
+    if (e.key === 'ArrowUp') {
+      if (panelOpen && activeIndex >= 0) {
+        e.preventDefault()
+        if (activeIndex === 0) {
+          // Step back out of the listing and restore the in-progress query.
+          setActiveIndex(-1)
+          setValue(typedBeforeNav.current)
+        } else {
+          const prev = activeIndex - 1
+          setActiveIndex(prev)
+          setValue(ordered[prev].name)
+        }
+      } else if (hist.current.length) {
+        e.preventDefault()
+        histPos.current = Math.min(histPos.current + 1, hist.current.length - 1)
+        setValue(hist.current[histPos.current])
+      }
+      return
+    }
+    if (e.key === 'Escape' && activeIndex >= 0) {
+      // Leave the listing without running anything; restore what was typed.
       e.preventDefault()
-      histPos.current = Math.max(histPos.current - 1, -1)
-      setValue(histPos.current < 0 ? '' : hist.current[histPos.current])
-    } else if (e.key === 'Tab') {
+      setActiveIndex(-1)
+      setValue(typedBeforeNav.current)
+      return
+    }
+    if (e.key === 'Tab') {
       const m = complete(value)
       if (m) {
         e.preventDefault()
@@ -691,15 +767,12 @@ export function Console({
     }
   }
 
-  // Show the command list when the desktop input is focused/filtering, or when
-  // the mobile picker button has been tapped (mobile has no text input).
-  const suggestions =
-    focused || value.trim() || pickerOpen ? suggest(value) : []
   // Run a picked suggestion, then clear and close the palette. Shared by both
   // suggestion groups (commands + the restricted easter eggs).
   const pickSuggestion = (name: string) => {
     run(name)
     setValue('')
+    setActiveIndex(-1)
     setPickerOpen(false)
     inputRef.current?.blur()
   }
@@ -989,6 +1062,7 @@ export function Console({
                                   key={q.name}
                                   suggestion={q}
                                   onPick={pickSuggestion}
+                                  active={q.name === activeName}
                                 />
                               ))}
                           </ul>
@@ -1009,6 +1083,7 @@ export function Console({
                                   key={q.name}
                                   suggestion={q}
                                   onPick={pickSuggestion}
+                                  active={q.name === activeName}
                                 />
                               ))}
                           </ul>
@@ -1030,6 +1105,7 @@ export function Console({
                                   key={q.name}
                                   suggestion={q}
                                   onPick={pickSuggestion}
+                                  active={q.name === activeName}
                                 />
                               ))}
                           </ul>
@@ -1043,6 +1119,8 @@ export function Console({
                   value={value}
                   onChange={(v) => {
                     setValue(v)
+                    // Typing drops out of any arrow-key highlight.
+                    setActiveIndex(-1)
                     if (error) setError('')
                   }}
                   onSubmit={(v) => {
@@ -1055,7 +1133,10 @@ export function Console({
                   }}
                   onKeyDown={onKeyDown}
                   onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
+                  onBlur={() => {
+                    setFocused(false)
+                    setActiveIndex(-1)
+                  }}
                   inputRef={inputRef}
                   placeholder="Type a query, or a command"
                   label="Query MOTHER"
