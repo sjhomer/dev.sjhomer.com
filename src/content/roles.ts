@@ -26,11 +26,9 @@ const data: Array<Role> = [
         text: 'Drive cross-functional collaboration with Product, Design, and Business teams to align engineering initiatives with company growth and customer needs.',
       },
       {
-        metric: '-40%',
         text: 'Reduced infrastructure costs by 40% through targeted optimizations in scaling, caching, and resource allocation.',
       },
       {
-        metric: '+50%',
         text: 'Spearheaded AI-assisted development workflows, improving engineering productivity by 50% and reducing operational bottlenecks.',
       },
       {
