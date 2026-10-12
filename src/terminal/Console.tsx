@@ -107,20 +107,46 @@ function ShipClock(): React.ReactElement {
   )
 }
 
-/** One row in the command palette. `data-group` drives the per-group styling. */
+/** Power glyph beside the wordmark — a clickability cue for the home link. */
+function PowerGlyph(): React.ReactElement {
+  return (
+    <svg
+      className="mu-console-power"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 3.2 V 11.5" />
+      <path d="M6.9 6.4 a 7 7 0 1 0 10.2 0" />
+    </svg>
+  )
+}
+
+/** One row in the command palette. `data-group` drives the per-group styling;
+ *  `active` marks the row the arrow keys have highlighted. */
 function SuggestItem({
   suggestion,
   onPick,
+  active = false,
 }: {
   suggestion: Suggestion
   onPick: (name: string) => void
+  active?: boolean
 }): React.ReactElement {
+  const ref = useRef<HTMLButtonElement>(null)
+  // Keep the highlighted row in view as the arrows walk a longer listing.
+  useEffect(() => {
+    if (active) ref.current?.scrollIntoView({ block: 'nearest' })
+  }, [active])
   return (
     <li>
       <button
+        ref={ref}
         type="button"
         className="mu-suggest-item"
         data-group={suggestion.group}
+        data-active={active || undefined}
+        aria-current={active || undefined}
         // preventDefault on mousedown keeps the input focused (so the panel
         // doesn't close before activation); onClick fires for both pointer and
         // keyboard (Enter/Space), so the item is keyboard-operable.
@@ -162,11 +188,14 @@ export function Console({
   const [bootKey, setBootKey] = useState(0)
   const [routeAnnounce, setRouteAnnounce] = useState('')
   const [destruct, setDestruct] = useState<number | null>(null)
-  // Self-destruct: aborted freezes the countdown and stands the alarm down;
-  // abortStep tracks the escalating re-confirm clicks on the abort control.
-  const [destructAborted, setDestructAborted] = useState(false)
+  // Self-destruct: abortStep tracks the escalating re-confirm clicks on the
+  // abort control. Standing the alarm down (abort or OVERRIDE) resolves into a
+  // log block and clears `destruct`, so there is no frozen trailing widget.
   const [abortStep, setAbortStep] = useState(0)
   const [focused, setFocused] = useState(false)
+  // Highlighted row within the (visually ordered) suggestion listing while it is
+  // navigated with the arrow keys; -1 means "typing freely, not in the list".
+  const [activeIndex, setActiveIndex] = useState(-1)
   // Mobile: the prompt is a button that opens the command picker (no typing).
   const [pickerOpen, setPickerOpen] = useState(false)
   const [cmdKey, setCmdKey] = useState('⌘ K')
@@ -187,6 +216,9 @@ export function Console({
   const hist = useRef<Array<string>>([])
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
+  // What the visitor had typed before stepping into the suggestion listing with
+  // the arrows, so ArrowUp past the top (or Escape) can put it back.
+  const typedBeforeNav = useRef('')
   const outRef = useRef<HTMLDivElement>(null)
   // Live mirrors for the once-bound global key handler (which must not re-bind
   // every render — that would reset the Konami progress each keystroke).
@@ -289,7 +321,6 @@ export function Console({
     setLog([])
     setWidgetReady(new Set())
     setDestruct(null)
-    setDestructAborted(false)
     setAbortStep(0)
     setPickerOpen(false)
     outRef.current?.scrollTo({ top: 0 })
@@ -311,7 +342,6 @@ export function Console({
     setLog([])
     setWidgetReady(new Set())
     setDestruct(null)
-    setDestructAborted(false)
     setAbortStep(0)
     setError('')
   }
@@ -354,8 +384,8 @@ export function Console({
   // Self-destruct countdown, with a rising tick each second and a pleasant
   // all-clear chime when the sequence resolves safely (it was never real).
   useEffect(() => {
-    // Aborted freezes the timer where it stood; inactive does nothing.
-    if (destruct == null || destructAborted) return undefined
+    // Inactive (or stood down → cleared) does nothing.
+    if (destruct == null) return undefined
     if (destruct <= 0) {
       audio.allClear()
       print(undefined, [
@@ -375,19 +405,36 @@ export function Console({
       1000,
     )
     return () => clearTimeout(t)
-  }, [destruct, destructAborted])
+  }, [destruct])
+
+  // Stand the alarm down (from the abort control or the OVERRIDE command): emit
+  // the all-clear as a log block — in chronological order, mirroring the
+  // detonation path — and clear the live countdown widget. Printing the result
+  // instead of freezing the trailing widget keeps it in place when more eggs
+  // run afterwards (otherwise "DETONATION PREVENTED" pinned to the bottom).
+  function standDownDestruct() {
+    print(undefined, [
+      {
+        text: 'DETONATION PREVENTED. THE NOSTROMO — AND THIS PORTFOLIO — STAND DOWN.',
+        tone: 'caution',
+        cps: 60,
+      },
+    ])
+    setDestruct(null)
+    setAbortStep(0)
+    void audio.arm().then(() => audio.allClear())
+  }
 
   // The abort control: each click escalates the re-confirm; the final click
-  // stands the alarm down (freezes the timer, keeps the widget as "prevented").
+  // stands the alarm down.
   function abortDestruct() {
-    if (destruct == null || destructAborted) return
+    if (destruct == null) return
     if (abortStep < ABORT_LABELS.length - 1) {
       setAbortStep((s) => s + 1)
       if (soundLevel !== 'off') void audio.arm().then(() => audio.click())
       return
     }
-    setDestructAborted(true)
-    void audio.arm().then(() => audio.allClear())
+    standDownDestruct()
   }
 
   // Easter-egg view follows its own output to the bottom (terminal-style) —
@@ -645,7 +692,6 @@ export function Console({
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
       setEggMode(true)
       setDestruct(DESTRUCT_FROM)
-      setDestructAborted(false)
       setAbortStep(0)
       print(cmd, [
         { text: 'EMERGENCY DESTRUCT SEQUENCE ARMED.', tone: 'alert' },
@@ -656,9 +702,8 @@ export function Console({
       setEggMode(true)
       // The abort control in the widget is the advertised way out; OVERRIDE
       // stays as a hidden shortcut to the same stand-down.
-      if (destruct != null && !destructAborted) {
-        setDestructAborted(true)
-        void audio.arm().then(() => audio.allClear())
+      if (destruct != null) {
+        standDownDestruct()
       } else {
         print(cmd, [
           { text: 'NO SEQUENCE TO OVERRIDE.', tone: 'dim', cps: 240 },
@@ -673,16 +718,75 @@ export function Console({
   // Keep the global key handler's view of run() current without re-binding it.
   runRef.current = run
 
+  // Show the command list when the desktop input is focused/filtering, or when
+  // the mobile picker button has been tapped (mobile has no text input).
+  // While the arrows are walking the listing the input mirrors the highlighted
+  // row, so filter by what the visitor actually typed (held in typedBeforeNav),
+  // not by the mirrored value — otherwise the list would collapse to one row
+  // and the highlight could never move past it.
+  const filterQuery = activeIndex >= 0 ? typedBeforeNav.current : value
+  const suggestions =
+    focused || value.trim() || pickerOpen ? suggest(filterQuery) : []
+  // The listing renders in grouped visual order (commands → design manual →
+  // restricted), so the arrow-key highlight walks that same flattened order.
+  const ordered = [
+    ...suggestions.filter((q) => q.group === 'query' || q.group === 'command'),
+    ...suggestions.filter((q) => q.group === 'manual'),
+    ...suggestions.filter((q) => q.group === 'easter'),
+  ]
+  // Name of the highlighted row (if any) — items match on this, so no index has
+  // to be threaded through the three grouped sections.
+  const activeName =
+    activeIndex >= 0 && activeIndex < ordered.length
+      ? ordered[activeIndex].name
+      : null
+
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'ArrowUp' && hist.current.length) {
+    // With the panel open, the arrows drive a highlight through the listing and
+    // mirror it into the input (so Enter simply submits the highlighted name);
+    // with the panel closed they page through command history as before.
+    const panelOpen = ordered.length > 0
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
-      histPos.current = Math.min(histPos.current + 1, hist.current.length - 1)
-      setValue(hist.current[histPos.current])
-    } else if (e.key === 'ArrowDown') {
+      if (panelOpen) {
+        if (activeIndex < 0) typedBeforeNav.current = value
+        const next =
+          activeIndex < 0 ? 0 : Math.min(activeIndex + 1, ordered.length - 1)
+        setActiveIndex(next)
+        setValue(ordered[next].name)
+      } else {
+        histPos.current = Math.max(histPos.current - 1, -1)
+        setValue(histPos.current < 0 ? '' : hist.current[histPos.current])
+      }
+      return
+    }
+    if (e.key === 'ArrowUp') {
+      if (panelOpen && activeIndex >= 0) {
+        e.preventDefault()
+        if (activeIndex === 0) {
+          // Step back out of the listing and restore the in-progress query.
+          setActiveIndex(-1)
+          setValue(typedBeforeNav.current)
+        } else {
+          const prev = activeIndex - 1
+          setActiveIndex(prev)
+          setValue(ordered[prev].name)
+        }
+      } else if (hist.current.length) {
+        e.preventDefault()
+        histPos.current = Math.min(histPos.current + 1, hist.current.length - 1)
+        setValue(hist.current[histPos.current])
+      }
+      return
+    }
+    if (e.key === 'Escape' && activeIndex >= 0) {
+      // Leave the listing without running anything; restore what was typed.
       e.preventDefault()
-      histPos.current = Math.max(histPos.current - 1, -1)
-      setValue(histPos.current < 0 ? '' : hist.current[histPos.current])
-    } else if (e.key === 'Tab') {
+      setActiveIndex(-1)
+      setValue(typedBeforeNav.current)
+      return
+    }
+    if (e.key === 'Tab') {
       const m = complete(value)
       if (m) {
         e.preventDefault()
@@ -691,15 +795,12 @@ export function Console({
     }
   }
 
-  // Show the command list when the desktop input is focused/filtering, or when
-  // the mobile picker button has been tapped (mobile has no text input).
-  const suggestions =
-    focused || value.trim() || pickerOpen ? suggest(value) : []
   // Run a picked suggestion, then clear and close the palette. Shared by both
   // suggestion groups (commands + the restricted easter eggs).
   const pickSuggestion = (name: string) => {
     run(name)
     setValue('')
+    setActiveIndex(-1)
     setPickerOpen(false)
     inputRef.current?.blur()
   }
@@ -749,9 +850,12 @@ export function Console({
           <div className="mu-console-strip" inert={showGate}>
             <div className="mu-console-id">
               <Link to="/" className="mu-console-home">
-                MU/TH/UR 6000
+                <PowerGlyph />
+                <span className="mu-console-home-text">MU/TH/UR 6000</span>
               </Link>
-              <ShipClock />
+              <div className="mu-console-meta">
+                <ShipClock />
+              </div>
             </div>
             <div className="mu-console-ctl">
               <Knob
@@ -864,34 +968,21 @@ export function Console({
                       </React.Fragment>
                     ))}
                     {destruct != null ? (
-                      <Alert
-                        title="Emergency destruct"
-                        level={destructAborted ? 'resolved' : 'alert'}
-                      >
-                        {!destructAborted ? (
-                          <p>
-                            THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN
-                          </p>
-                        ) : null}
+                      <Alert title="Emergency destruct" level="alert">
+                        <p>THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN</p>
                         {/* aria-hidden: the per-second tick must not re-fire the
                         assertive role=alert announcement on every change. */}
                         <p className="mu-countdown" aria-hidden="true">
                           T-MINUS 00:
                           {String(Math.max(0, destruct)).padStart(2, '0')}
                         </p>
-                        {destructAborted ? (
-                          <p className="mu-destruct-done">
-                            DETONATION PREVENTED
-                          </p>
-                        ) : (
-                          <button
-                            type="button"
-                            className="mu-destruct-abort"
-                            onClick={abortDestruct}
-                          >
-                            {ABORT_LABELS[abortStep]}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="mu-destruct-abort"
+                          onClick={abortDestruct}
+                        >
+                          {ABORT_LABELS[abortStep]}
+                        </button>
                       </Alert>
                     ) : null}
                   </div>
@@ -989,6 +1080,7 @@ export function Console({
                                   key={q.name}
                                   suggestion={q}
                                   onPick={pickSuggestion}
+                                  active={q.name === activeName}
                                 />
                               ))}
                           </ul>
@@ -1009,6 +1101,7 @@ export function Console({
                                   key={q.name}
                                   suggestion={q}
                                   onPick={pickSuggestion}
+                                  active={q.name === activeName}
                                 />
                               ))}
                           </ul>
@@ -1030,6 +1123,7 @@ export function Console({
                                   key={q.name}
                                   suggestion={q}
                                   onPick={pickSuggestion}
+                                  active={q.name === activeName}
                                 />
                               ))}
                           </ul>
@@ -1043,6 +1137,8 @@ export function Console({
                   value={value}
                   onChange={(v) => {
                     setValue(v)
+                    // Typing drops out of any arrow-key highlight.
+                    setActiveIndex(-1)
                     if (error) setError('')
                   }}
                   onSubmit={(v) => {
@@ -1055,7 +1151,10 @@ export function Console({
                   }}
                   onKeyDown={onKeyDown}
                   onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
+                  onBlur={() => {
+                    setFocused(false)
+                    setActiveIndex(-1)
+                  }}
                   inputRef={inputRef}
                   placeholder="Type a query, or a command"
                   label="Query MOTHER"

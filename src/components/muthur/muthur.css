@@ -404,15 +404,6 @@
   background: var(--alert);
   color: var(--on-phosphor);
 }
-.mu-destruct-done {
-  justify-self: start;
-  font: var(--label-weight) var(--label-size) / 1 var(--font-mono);
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
-  color: var(--phosphor);
-  border: 1px solid var(--phosphor-dim);
-  padding: var(--space-2) var(--space-3);
-}
 @keyframes mu-alarm {
   50% {
     background: transparent;
