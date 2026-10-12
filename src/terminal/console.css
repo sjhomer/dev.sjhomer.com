@@ -235,8 +235,11 @@
   align-content: start;
 }
 
-/* Clickable wordmark returns home. */
+/* Clickable wordmark returns home. The power glyph is a clickability cue. */
 .mu-console-home {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--phosphor-dim);
   text-decoration: none;
   letter-spacing: inherit;
@@ -244,6 +247,45 @@
 .mu-console-home:hover {
   color: var(--phosphor);
   text-shadow: var(--glow-sm);
+}
+.mu-console-power {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.mu-console-home:hover .mu-console-power {
+  filter: drop-shadow(0 0 4px var(--phosphor));
+}
+/* Transparent by default so the ship id / clock flow as before (mobile); the
+   desktop breakpoint promotes it to a meta row under the enlarged wordmark. */
+.mu-console-meta {
+  display: contents;
+}
+/* Desktop: give the wordmark presence and stack the ship-id meta beneath it, so
+   the left of the strip reads as a lit nameplate instead of empty space. */
+@media (min-width: 700px) {
+  .mu-console-id {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+  .mu-console-home {
+    gap: var(--space-2);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--phosphor);
+    text-shadow: var(--glow-sm);
+  }
+  .mu-console-meta {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
 }
 
 /* Focus = a command palette: dim the monitor, lift the prompt + suggestions. */

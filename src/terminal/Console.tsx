@@ -107,6 +107,21 @@ function ShipClock(): React.ReactElement {
   )
 }
 
+/** Power glyph beside the wordmark — a clickability cue for the home link. */
+function PowerGlyph(): React.ReactElement {
+  return (
+    <svg
+      className="mu-console-power"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 3.2 V 11.5" />
+      <path d="M6.9 6.4 a 7 7 0 1 0 10.2 0" />
+    </svg>
+  )
+}
+
 /** One row in the command palette. `data-group` drives the per-group styling;
  *  `active` marks the row the arrow keys have highlighted. */
 function SuggestItem({
@@ -822,9 +837,12 @@ export function Console({
           <div className="mu-console-strip" inert={showGate}>
             <div className="mu-console-id">
               <Link to="/" className="mu-console-home">
-                MU/TH/UR 6000
+                <PowerGlyph />
+                <span className="mu-console-home-text">MU/TH/UR 6000</span>
               </Link>
-              <ShipClock />
+              <div className="mu-console-meta">
+                <ShipClock />
+              </div>
             </div>
             <div className="mu-console-ctl">
               <Knob
