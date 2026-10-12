@@ -47,8 +47,8 @@ The plan set four pillars, and they turned out to be load-bearing:
 
 The site answers to the same instincts a real terminal does. Three input modes
 run side by side: a **command line**, **numbered options** you can click or key,
-and ordinary **links** for screen readers and crawlers. Ask it a question and it
-replies in MOTHER's voice; the career becomes a thing you _interrogate_ rather
+and ordinary **links** for screen readers and crawlers. Query it and the answers
+come back in MOTHER's voice; the career becomes a thing you _interrogate_ rather
 than a page you consume.
 
 Everything is framed in the fiction. The CV is a **service log**. Case studies
@@ -70,12 +70,10 @@ three input modes, the phosphor palette, the progressive-enhancement spine. But
 the character of the site came from the places it _changed_, through iteration
 and a fair amount of stubbornness:
 
-- **MOTHER stayed grounded, not generative.** The plan left room for an "Ask
-  MOTHER" feature backed by a live LLM. It would have been the easy flex — but a
-  terminal that hallucinates its own crew's history is a worse terminal. So
-  `ASK` answers from hand-authored, keyword-matched responses and says so out
-  loud: _`[ CANNED RESPONSE — MOTHER IS GROUNDED, NOT GENERATIVE ]`_. Honesty,
-  in character.
+- **The planned LLM was dropped before launch.** The plan held room for an
+  optional "Ask MOTHER" feature backed by a live model; it never shipped. A
+  terminal that hallucinates its own crew's history is a worse terminal, and the
+  site is sharper for staying grounded in the typed content.
 - **The engine was hand-rolled.** No `xterm.js` — that's built for real shells.
   A small set of React primitives type content out character by character while
   the _full_ text already sits in the DOM, so every word stays selectable,
@@ -126,15 +124,15 @@ when a device can afford them.
 Half the fun is what's _not_ on the menu — cheap to add once the command
 registry exists, and impossible to resist:
 
-| Command                   | What happens                                                                                                                                                            |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SPECIAL ORDER 937`       | The infamous directive prints — _"ensure return of organism… crew expendable"_ — then the cursor hangs, and the last line is amended, on screen, to **CREW ESSENTIAL**. |
-| `WHAT'S THE STORY MOTHER` | Arms the **emergency destruct sequence**: a full-screen countdown with a tick that climbs in pitch. Type `OVERRIDE` to abort before it reaches zero.                    |
-| `ROLL D20`                | Rolls the dice, a nod to a lifelong love of tabletop RPGs. A natural 1 trips the **danger klaxon**; a natural 20 sounds the **all-clear**.                              |
-| `JONESY`                  | The ship's cat is accounted for.                                                                                                                                        |
-| `DEBUG`                   | A tongue-in-cheek self-diagnostic that reads real live values — viewport, palette, uptime — and wraps them in Nostromo flavour.                                         |
-| `SOUND BOARD`             | A playable board of every sound effect, revealed one pad at a time.                                                                                                     |
-| `↑ ↑ ↓ ↓ …`               | The Konami code flips the palette to **Sevastopol** amber: _"PALETTE OVERRIDE ACCEPTED. WELCOME TO SEVASTOPOL STATION."_                                                |
+| Command                   | What happens                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SPECIAL ORDER 937`       | The infamous directive prints — _"ensure return of organism… crew expendable"_ — then the cursor hangs, and the last line is amended, on screen, to **CREW ESSENTIAL**.    |
+| `WHAT'S THE STORY MOTHER` | Arms the **emergency destruct sequence**: a full-screen countdown with a tick that climbs in pitch. An escalating **Abort** control stands it down — or let it reach zero. |
+| `ROLL D20`                | Rolls the dice, a nod to a lifelong love of tabletop RPGs. A natural 1 trips the **danger klaxon**; a natural 20 sounds the **all-clear**.                                 |
+| `JONESY`                  | The ship's cat is accounted for.                                                                                                                                           |
+| `DEBUG`                   | A tongue-in-cheek self-diagnostic that reads real live values — viewport, palette, uptime — and wraps them in Nostromo flavour.                                            |
+| `SOUND BOARD`             | A playable board of every sound effect, revealed one pad at a time.                                                                                                        |
+| `↑ ↑ ↓ ↓ …`               | The Konami code flips the palette to **Sevastopol** amber: _"PALETTE OVERRIDE ACCEPTED. WELCOME TO SEVASTOPOL STATION."_                                                   |
 
 ![SPECIAL ORDER 937 amended on screen](docs/media/special-order-937.png)
 
