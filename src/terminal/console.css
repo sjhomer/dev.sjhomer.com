@@ -417,6 +417,15 @@
   color: var(--caution);
   text-shadow: var(--glow-sm);
 }
+/* The design manual's heading: its own drawer, set apart with a solid rule and
+   a full-phosphor label so it reads as the standalone reference it is. */
+.mu-suggest-head-manual {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--phosphor-faint);
+  color: var(--phosphor);
+  text-shadow: var(--glow-sm);
+}
 .mu-suggest {
   display: grid;
   gap: 1px;

@@ -122,7 +122,7 @@ export function resolvePath(raw: string): string | undefined {
 export interface Suggestion {
   name: string
   hint: string
-  group: 'query' | 'command' | 'easter'
+  group: 'query' | 'command' | 'easter' | 'manual'
 }
 
 /**
@@ -139,10 +139,10 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: q.hint,
     group: 'query' as const,
   })),
-  { name: 'HELP', hint: 'list available queries', group: 'command' },
-  // GUIDE is off the numbered menu but surfaced here so the design manual is
-  // discoverable from the command palette (and Tab-completes).
-  { name: 'GUIDE', hint: 'interface design manual', group: 'command' },
+  // GUIDE (the design manual) is off the numbered menu but surfaced here in its
+  // own section so it reads as the standalone reference it is (and Tab-completes).
+  // HELP stays runnable by typing, but is kept out of the visible menu.
+  { name: 'GUIDE', hint: 'interface design manual', group: 'manual' },
   {
     name: 'SPECIAL ORDER 937',
     hint: 'science officer eyes only',

@@ -965,7 +965,9 @@ export function Console({
 
                 {suggestions.length ? (
                   <div className="mu-suggest-panel" aria-label="Commands">
-                    {suggestions.some((q) => q.group !== 'easter') ? (
+                    {suggestions.some(
+                      (q) => q.group === 'query' || q.group === 'command',
+                    ) ? (
                       <>
                         <p className="mu-suggest-head">
                           COMMANDS
@@ -976,7 +978,30 @@ export function Console({
                         </p>
                         <ul className="mu-suggest">
                           {suggestions
-                            .filter((q) => q.group !== 'easter')
+                            .filter(
+                              (q) =>
+                                q.group === 'query' || q.group === 'command',
+                            )
+                            .map((q) => (
+                              <SuggestItem
+                                key={q.name}
+                                suggestion={q}
+                                onPick={pickSuggestion}
+                              />
+                            ))}
+                        </ul>
+                      </>
+                    ) : null}
+                    {/* The design manual gets its own section — a standalone
+                      reference, set apart from the runnable commands. */}
+                    {suggestions.some((q) => q.group === 'manual') ? (
+                      <>
+                        <p className="mu-suggest-head mu-suggest-head-manual">
+                          ◈ Design manual
+                        </p>
+                        <ul className="mu-suggest">
+                          {suggestions
+                            .filter((q) => q.group === 'manual')
                             .map((q) => (
                               <SuggestItem
                                 key={q.name}
