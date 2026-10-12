@@ -5,8 +5,8 @@ import { z } from 'zod'
  * content fails the build/test rather than reaching the page. Types are inferred
  * from the schemas — one source of truth for the terminal, /cv, JSON-LD and PDF.
  *
- * Role mirrors the MU/TH/UR Interface design-system `LogEntry` contract so the
- * terminal and CV can render it 1:1.
+ * Role carries one service-record entry, rendered 1:1 by the terminal Service
+ * Log and the printable /cv.
  */
 
 const yearMonth = z.string().regex(/^\d{4}-\d{2}$/, 'dates are YYYY-MM')
@@ -50,7 +50,6 @@ export const roleSchema = z.object({
   end: yearMonth.nullable(),
   remote: z.boolean(),
   clearance: clearanceSchema,
-  summary: z.string().optional(),
   highlights: z.array(highlightSchema).min(1),
   tags: z.array(z.string()).default([]),
 })
@@ -63,7 +62,9 @@ export const missionSchema = z.object({
   brief: z.string().min(1),
   tech: z.array(z.string()).default([]),
   services: z.array(z.string()).default([]),
+  /** A single primary link (legacy); use `links` for several named references. */
   link: z.string().url().optional(),
+  links: z.array(linkSchema).optional(),
   era: z.string().optional(),
 })
 export type Mission = z.infer<typeof missionSchema>

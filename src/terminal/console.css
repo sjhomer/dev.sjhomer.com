@@ -13,6 +13,31 @@
   padding: var(--space-4) 16px;
 }
 
+/* The design manual takes over the viewport as a plain, single-scroll reading
+   page: full width, document scroll, palette background, no CRT screen chrome. */
+.mu-console--guide {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+  max-width: none;
+  padding: 0;
+  gap: 0;
+  background: var(--crt-void);
+}
+.mu-guide-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  padding: var(--space-3) 16px;
+  background: var(--crt-void);
+  border-bottom: 1px solid var(--phosphor-faint);
+}
+.mu-guide-main {
+  display: block;
+  background: var(--crt-void);
+}
+
 .mu-console-strip {
   display: flex;
   flex-wrap: wrap;
@@ -65,6 +90,103 @@
 .mu-toggle:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* --- Analog control knobs (console header) --------------------------------- *
+ * Real <button>s dressed as rotary dials: N notches round the top arc and a
+ * pointer that rotates to the active one. The dial is a pure gauge; the control
+ * name and current value are read as a caption outside it. Round knobs are a
+ * deliberate analog counterpoint to the otherwise square CRT chrome. */
+.mu-knob {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 2px;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--phosphor-dim);
+}
+.mu-knob-dial {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+}
+.mu-knob-dial svg {
+  width: 34px;
+  height: 34px;
+  overflow: visible;
+}
+.mu-knob-face {
+  fill: var(--crt-void);
+  stroke: var(--phosphor-dim);
+  stroke-width: 1.5;
+}
+.mu-knob-tick {
+  stroke: var(--phosphor-faint);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.mu-knob-tick[data-active='true'] {
+  stroke: var(--phosphor);
+}
+.mu-knob-pointer {
+  transform-box: view-box;
+  transform-origin: 20px 20px;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.5, 1);
+}
+.mu-knob-pointer line {
+  stroke: var(--phosphor-dim);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.mu-knob-hub {
+  fill: var(--phosphor-dim);
+}
+/* Caption: control name + current value, read outside the dial. */
+.mu-knob-cap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+  text-align: center;
+}
+.mu-knob-name {
+  font: 500 10px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--phosphor-dim);
+}
+.mu-knob-val {
+  font: 600 11px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--phosphor-dim);
+}
+.mu-knob[data-on='true'] .mu-knob-val {
+  color: var(--phosphor);
+  text-shadow: var(--glow-sm);
+}
+/* Lit / hover states (focus uses the global 2px caution ring). */
+.mu-knob[data-on='true'] .mu-knob-face,
+.mu-knob:hover .mu-knob-face {
+  stroke: var(--phosphor);
+}
+.mu-knob[data-on='true'] .mu-knob-pointer line,
+.mu-knob:hover .mu-knob-pointer line {
+  stroke: var(--phosphor);
+  filter: drop-shadow(0 0 2px var(--phosphor));
+}
+.mu-knob:hover .mu-knob-name,
+.mu-knob:hover .mu-knob-val {
+  color: var(--phosphor);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mu-knob-pointer {
+    transition: none;
+  }
 }
 
 .mu-console-screen {
@@ -293,6 +415,15 @@
   padding-top: var(--space-2);
   border-top: 1px dashed var(--phosphor-faint);
   color: var(--caution);
+  text-shadow: var(--glow-sm);
+}
+/* The design manual's heading: its own drawer, set apart with a solid rule and
+   a full-phosphor label so it reads as the standalone reference it is. */
+.mu-suggest-head-manual {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--phosphor-faint);
+  color: var(--phosphor);
   text-shadow: var(--glow-sm);
 }
 .mu-suggest {
@@ -923,11 +1054,6 @@
   letter-spacing: 0.08em;
 }
 
-/* Mobile hints are hidden on desktop. */
-.mu-hints-mobile {
-  display: none;
-}
-
 /* Mobile pager: two labelled prev/next buttons that replace swipe nav.
    Hidden on desktop (the numbered menu covers it); shown at phone widths. */
 .mu-pager {
@@ -1024,18 +1150,6 @@
   .mu-hints-desktop {
     display: none;
   }
-  .mu-hints-mobile {
-    display: block;
-    margin: 0;
-    text-align: center;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-  .mu-swipe {
-    color: var(--phosphor);
-    letter-spacing: 0.12em;
-    white-space: nowrap;
-  }
   .mu-suggest-panel {
     max-height: 62vh;
   }
@@ -1111,6 +1225,19 @@
   }
   .mu-console-id {
     gap: var(--space-1) var(--space-3);
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  /* Keep the ship-id copy on the left and the knobs on the right in a single
+     row (the id wraps within its shrinking column) rather than pushing the
+     knobs onto their own full-width row below. */
+  .mu-console-strip {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .mu-console-ctl {
+    flex: 0 0 auto;
+    gap: var(--space-3);
   }
   /* Egg print-out headings (SPECIAL ORDER 937, the DEBUG / SOUND BOARD titles,
      the ROLL D20 result) and the self-destruct countdown are too large at their

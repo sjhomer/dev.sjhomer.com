@@ -9,6 +9,58 @@ import type { Mission } from './schema'
  */
 const data: Array<Mission> = [
   {
+    id: 'dev-sjhomer-portfolio',
+    title: 'dev.sjhomer.com — MU/TH/UR 6000 Portfolio',
+    era: 'Personal',
+    brief:
+      'A developer portfolio disguised as the MU/TH/UR 6000, the ship’s computer from Alien. Inspired by a lifelong love of science fiction and the retro-futurist terminals of the Alien franchise, you boot the mainframe and query the crew file — and every answer types back in cold green phosphor. The terminal is the navigation, with synced original sound effects, line-by-line type rendering, three palettes, and a trove of easter eggs. A fun, expressive experiment in showing a career as something you interrogate rather than scroll.',
+    tech: [
+      'React 19',
+      'TanStack Start',
+      'TypeScript',
+      'Vite',
+      'Tailwind v4',
+      'Zod',
+      'Howler',
+      'Cloudflare Workers',
+      'Playwright',
+    ],
+    services: ['Concept', 'Design', 'Lead Development', 'DevOps'],
+    links: [
+      { label: 'dev.sjhomer.com', href: 'https://dev.sjhomer.com' },
+      {
+        label: 'github.com/sjhomer/dev.sjhomer.com',
+        href: 'https://github.com/sjhomer/dev.sjhomer.com',
+      },
+    ],
+  },
+  {
+    id: 'battlefy-player-hub',
+    title: 'Battlefy Player Hub',
+    era: 'Battlefy',
+    brief:
+      'A bespoke CMS suite built to modernize and integrate with Battlefy’s tournament and esports team-management controls through a highly customized content-block system. React and react-query on the front end, an Express-to-Lambda backend, and specialized cache / cache-invalidation controls that give editors a smooth preview-ahead-of-publication workflow.',
+    tech: [
+      'React',
+      'react-query',
+      'Express',
+      'AWS Lambda',
+      'Headless CMS',
+      'Caching',
+    ],
+    services: ['Technical Strategy Lead', 'Development Lead'],
+    links: [
+      {
+        label: 'battlefy.com/nintendovs',
+        href: 'https://battlefy.com/nintendovs',
+      },
+      {
+        label: 'battlefy.com/battlefield',
+        href: 'https://battlefy.com/battlefield',
+      },
+    ],
+  },
+  {
     id: 'recovery-gpt',
     title: 'Recovery GPT',
     era: 'Personal',

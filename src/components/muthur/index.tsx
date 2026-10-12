@@ -729,7 +729,7 @@ export function ProgressBar(props: ProgressBarProps): React.ReactElement {
 
 export interface AlertProps {
   title: string
-  level?: 'alert' | 'caution'
+  level?: 'alert' | 'caution' | 'resolved'
   children?: React.ReactNode
   className?: string
 }
@@ -740,6 +740,7 @@ export function Alert(props: AlertProps): React.ReactElement {
       className={cx(
         'mu-alert',
         level === 'caution' && 'mu-alert-caution',
+        level === 'resolved' && 'mu-alert-resolved',
         props.className,
       )}
       role={level === 'alert' ? 'alert' : 'status'}
@@ -747,91 +748,5 @@ export function Alert(props: AlertProps): React.ReactElement {
       <p className="mu-alert-title">{props.title}</p>
       {props.children}
     </div>
-  )
-}
-
-export interface Role {
-  title: string
-  company: string
-  start: string
-  end?: string | null
-  remote?: boolean
-  clearance?: 'COMMAND' | 'ACTIVE' | 'ARCHIVED'
-  highlights?: Array<{ metric?: string; text: string }>
-}
-export interface LogEntryProps {
-  role: Role
-  className?: string
-}
-export function LogEntry(props: LogEntryProps): React.ReactElement {
-  const r = props.role
-  const dates = r.start + ' → ' + (r.end || 'PRESENT')
-  return (
-    <article className={cx('mu-log', props.className)}>
-      <div className="mu-log-meta">
-        <span>{dates}</span>
-        {r.remote ? <span>REMOTE</span> : null}
-        {r.clearance ? (
-          <Tag
-            tone={
-              r.clearance === 'COMMAND'
-                ? 'caution'
-                : r.clearance === 'ARCHIVED'
-                  ? 'dim'
-                  : 'normal'
-            }
-          >
-            {r.clearance}
-          </Tag>
-        ) : null}
-      </div>
-      <h3 className="mu-log-title">{r.title}</h3>
-      <p className="mu-log-company">{r.company}</p>
-      {r.highlights && r.highlights.length ? (
-        <ul className="mu-log-list">
-          {r.highlights.map((x, i) => (
-            <li key={i} className="mu-log-item">
-              {x.metric ? (
-                <span className="mu-log-metric">{x.metric}</span>
-              ) : (
-                <span className="mu-log-bullet" aria-hidden="true">
-                  ■
-                </span>
-              )}
-              <span>{x.text}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </article>
-  )
-}
-
-export interface ScreenProps {
-  title?: string
-  status?: string
-  label?: string
-  flicker?: boolean
-  children?: React.ReactNode
-  className?: string
-}
-export function Screen(props: ScreenProps): React.ReactElement {
-  return (
-    <section
-      className={cx(
-        'mu-screen',
-        props.flicker !== false && 'mu-screen-flicker',
-        props.className,
-      )}
-      aria-label={props.label || undefined}
-    >
-      {props.title || props.status ? (
-        <header className="mu-screen-head">
-          <span>{props.title}</span>
-          <span>{props.status}</span>
-        </header>
-      ) : null}
-      <div className="mu-screen-body">{props.children}</div>
-    </section>
   )
 }

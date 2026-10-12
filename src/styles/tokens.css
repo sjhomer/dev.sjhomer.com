@@ -11,7 +11,11 @@
  * Non-colour tokens (type, spacing, radius, cadence, layout) are palette-invariant.
  */
 
-:root {
+/* mother is the :root default AND an explicit palette, so a nested
+   [data-palette='mother'] island (e.g. the design-manual swatch cards) keeps the
+   green tokens even on an amber or paper page. */
+:root,
+[data-palette='mother'] {
   /* ---- Colour (mother / green, default) ---- */
   --crt-void: #020a04; /* page ground behind every screen */
   --crt-panel: #051a0c; /* lit glass inside a Screen */

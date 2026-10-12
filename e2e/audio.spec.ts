@@ -65,15 +65,15 @@ test('volume button toggles off <-> on and persists', async ({ page }) => {
   await page.goto('/')
   await waitForHydration(page)
 
-  const vol = page.getByRole('button', { name: /^Volume:/ })
-  await expect(vol).toHaveText(/Volume: off/)
+  const vol = page.getByRole('button', { name: /^Volume / })
+  await expect(vol).toHaveAttribute('aria-label', /Volume off/)
 
   await vol.click()
-  await expect(vol).toHaveText(/Volume: on/)
+  await expect(vol).toHaveAttribute('aria-label', /Volume on/)
   expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe('on')
 
   await vol.click()
-  await expect(vol).toHaveText(/Volume: off/)
+  await expect(vol).toHaveAttribute('aria-label', /Volume off/)
   expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe(
     'off',
   )
@@ -89,8 +89,8 @@ test('sound stays on after a full-load /cv round-trip', async ({ page }) => {
   await page.getByRole('button', { name: /BACK TO TRANSMIT/i }).click()
   await expect(page).toHaveURL(/\/transmit$/)
 
-  const vol = page.getByRole('button', { name: /^Volume:/ })
-  await expect(vol).toHaveText(/Volume: on/)
+  const vol = page.getByRole('button', { name: /^Volume / })
+  await expect(vol).toHaveAttribute('aria-label', /Volume on/)
 })
 
 test('palette button now cycles through hardcopy in place (no /cv nav)', async ({
@@ -100,13 +100,13 @@ test('palette button now cycles through hardcopy in place (no /cv nav)', async (
   await page.goto('/')
   await waitForHydration(page)
 
-  const pal = page.getByRole('button', { name: /^Palette:/ })
-  await expect(pal).toHaveText(/Palette: green/)
+  const pal = page.getByRole('button', { name: /Change palette/ })
+  await expect(pal).toHaveAttribute('aria-label', /Theme: green/)
 
   await pal.click()
-  await expect(pal).toHaveText(/Palette: amber/)
+  await expect(pal).toHaveAttribute('aria-label', /Theme: amber/)
   await pal.click()
-  await expect(pal).toHaveText(/Palette: hardcopy/)
+  await expect(pal).toHaveAttribute('aria-label', /Theme: hardcopy/)
 
   // Restyle happened in place — still on the terminal, not the /cv route.
   await expect(page).toHaveURL(/\/$/)

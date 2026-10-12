@@ -72,27 +72,14 @@ export const QUERIES: Array<Query> = [
     aliases: ['PRINT CV', 'RESUME'],
     offMenu: true,
   },
-]
-
-/** Transient commands that print to the log rather than routing. */
-export const BUILTINS = [
-  'HELP',
-  'CLEAR',
-  'ASK',
-  'JONESY',
-  'ROLL',
-  'OVERRIDE',
-  'DOWNLOAD',
-  'DEBUG',
-  'SOUND BOARD',
-] as const
-
-/** Everything a Tab/visible auto-complete can offer, uppercase. */
-export const COMPLETIONS: Array<string> = [
-  ...QUERIES.map((q) => q.name),
-  ...QUERIES.flatMap((q) => q.aliases ?? []),
-  ...BUILTINS,
-  'ASK ',
+  {
+    name: 'GUIDE',
+    label: 'Design manual',
+    hint: 'interface style guide',
+    path: '/guide',
+    aliases: ['STYLE GUIDE', 'DESIGN GUIDE', 'MANUAL'],
+    offMenu: true,
+  },
 ]
 
 export const MENU = QUERIES.filter((q) => q.index && !q.offMenu)
@@ -135,7 +122,7 @@ export function resolvePath(raw: string): string | undefined {
 export interface Suggestion {
   name: string
   hint: string
-  group: 'query' | 'command' | 'easter'
+  group: 'query' | 'command' | 'easter' | 'manual'
 }
 
 /**
@@ -152,6 +139,10 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: q.hint,
     group: 'query' as const,
   })),
+  // GUIDE (the design manual) is off the numbered menu but surfaced here in its
+  // own section so it reads as the standalone reference it is (and Tab-completes).
+  // HELP stays runnable by typing, but is kept out of the visible menu.
+  { name: 'GUIDE', hint: 'interface design manual', group: 'manual' },
   {
     name: 'SPECIAL ORDER 937',
     hint: 'science officer eyes only',

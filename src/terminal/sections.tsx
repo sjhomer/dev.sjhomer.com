@@ -244,16 +244,34 @@ export function MissionsSection(): React.ReactElement {
               ))}
             </div>
           ) : null}
-          {m.link ? (
-            <p className="mu-type">
-              <a
-                className="mu-link"
-                href={m.link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {m.link.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-              </a>
+          {m.link || m.links?.length ? (
+            <p className="mu-type mu-mission-links">
+              {[
+                ...(m.link
+                  ? [
+                      {
+                        label: m.link
+                          .replace(/^https?:\/\//, '')
+                          .replace(/\/$/, ''),
+                        href: m.link,
+                      },
+                    ]
+                  : []),
+                ...(m.links ?? []),
+              ].map((l, i) => (
+                <React.Fragment key={l.href}>
+                  {i > 0 ? <span aria-hidden="true"> · </span> : null}
+                  <a
+                    className="mu-link"
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {l.label}
+                    <span className="mu-sr"> (opens in new tab)</span>
+                  </a>
+                </React.Fragment>
+              ))}
             </p>
           ) : null}
         </Staged>
