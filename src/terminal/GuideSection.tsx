@@ -7,7 +7,6 @@ import {
   Metric,
   ProgressBar,
   Tag,
-  Typewriter,
 } from '../components/muthur'
 import { Knob } from './Knob'
 import './guide.css'
@@ -112,7 +111,12 @@ function GuideHead({
 }): React.ReactElement {
   return (
     <div className="mu-g-head">
-      <Divider label={`§${n} — ${title}`} />
+      <h2 id={`guide-s${n}`} className="mu-g-h">
+        <span className="mu-g-h-n" aria-hidden="true">
+          §{n}
+        </span>{' '}
+        {title}
+      </h2>
       <p className="mu-g-lead">{lead}</p>
     </div>
   )
@@ -128,13 +132,12 @@ export function GuideSection(): React.ReactElement {
           The design system behind <strong>dev.sjhomer.com</strong>, documented
           against the shipped site. It began as a concept artifact — a token set
           and ~15 component contracts — and much of it survived to launch; this
-          page is the living record of what the site actually runs. It inherits
-          the active palette, so the <strong>Thm.</strong> knob up top restyles
-          everything below in place.
+          page is the living record of what the site actually runs, rendered in
+          whatever palette is active across the site.
         </p>
       </header>
 
-      <section>
+      <section aria-labelledby="guide-s1">
         <GuideHead
           n="1"
           title="Palettes"
@@ -169,7 +172,7 @@ export function GuideSection(): React.ReactElement {
         </div>
       </section>
 
-      <section>
+      <section aria-labelledby="guide-s2">
         <GuideHead
           n="2"
           title="Typography"
@@ -185,7 +188,7 @@ export function GuideSection(): React.ReactElement {
         </div>
       </section>
 
-      <section>
+      <section aria-labelledby="guide-s3">
         <GuideHead
           n="3"
           title="Spacing"
@@ -206,7 +209,7 @@ export function GuideSection(): React.ReactElement {
         </ul>
       </section>
 
-      <section>
+      <section aria-labelledby="guide-s4">
         <GuideHead
           n="4"
           title="Motion & cadence"
@@ -220,17 +223,14 @@ export function GuideSection(): React.ReactElement {
             </li>
           ))}
         </ul>
-        <div className="mu-g-demo">
-          <span className="mu-g-demo-label">Live · prose cadence</span>
-          <Typewriter
-            key="guide-demo"
-            text="MOTHER is grounded, not generative — every answer is authored."
-            cps={90}
-          />
-        </div>
+        <p className="mu-g-lead">
+          Content types in line by line on the terminal and the reading pages;
+          it is instant here on the manual, and instant everywhere under
+          reduced motion.
+        </p>
       </section>
 
-      <section>
+      <section aria-labelledby="guide-s5">
         <GuideHead
           n="5"
           title="Components"
@@ -266,20 +266,21 @@ export function GuideSection(): React.ReactElement {
           <div className="mu-g-cell">
             <div className="mu-g-cell-demo mu-g-cell-knobs">
               <Knob
-                label="Thm."
+                name="Thm."
+                value="GREEN"
                 positions={3}
                 index={0}
-                colorTab="GREEN"
                 on
                 onClick={() => {}}
                 ariaLabel="Sample theme knob (demo)"
               />
               <Knob
-                label="CRT"
+                name="CRT"
+                value="ON"
                 positions={2}
                 index={1}
-                endLabels={['off', 'on']}
                 on
+                pressed
                 onClick={() => {}}
                 ariaLabel="Sample CRT knob (demo)"
               />
@@ -304,7 +305,7 @@ export function GuideSection(): React.ReactElement {
         </div>
       </section>
 
-      <section>
+      <section aria-labelledby="guide-s6">
         <GuideHead
           n="6"
           title="Sound"
@@ -326,7 +327,7 @@ export function GuideSection(): React.ReactElement {
         </ul>
       </section>
 
-      <section>
+      <section aria-labelledby="guide-s7">
         <GuideHead
           n="7"
           title="Methodology"

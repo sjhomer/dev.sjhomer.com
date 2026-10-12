@@ -3,19 +3,22 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { Knob } from './Knob'
 
 describe('Knob', () => {
-  it('is a button carrying the accessible label, and fires onClick', () => {
+  it('is a button carrying the accessible label + pressed state, and fires onClick', () => {
     const onClick = vi.fn()
     render(
       <Knob
-        label="CRT"
+        name="CRT"
+        value="ON"
         positions={2}
         index={1}
         on
+        pressed
         ariaLabel="CRT effects on. Toggle."
         onClick={onClick}
       />,
     )
     const btn = screen.getByRole('button', { name: 'CRT effects on. Toggle.' })
+    expect(btn).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(btn)
     expect(onClick).toHaveBeenCalledOnce()
   })
@@ -23,7 +26,8 @@ describe('Knob', () => {
   it('draws one notch per position', () => {
     const { container } = render(
       <Knob
-        label="Thm."
+        name="Thm."
+        value="GREEN"
         positions={3}
         index={1}
         ariaLabel="Theme: green. Change palette."
@@ -37,7 +41,8 @@ describe('Knob', () => {
     const rot = (positions: number, index: number) => {
       const { container } = render(
         <Knob
-          label="x"
+          name="x"
+          value="x"
           positions={positions}
           index={index}
           ariaLabel="x"
@@ -53,29 +58,22 @@ describe('Knob', () => {
     expect(rot(2, 1)).toContain('rotate(50deg)') // on → right
   })
 
-  it('renders the colour tab and the on/off end labels when given', () => {
-    const { container, rerender } = render(
+  it('reads the name and current value as a caption; a 3-way knob omits aria-pressed', () => {
+    const { container } = render(
       <Knob
-        label="Thm."
+        name="Thm."
+        value="PAPER"
         positions={3}
         index={2}
-        colorTab="PAPER"
+        on
         ariaLabel="Theme: hardcopy. Change palette."
         onClick={() => {}}
       />,
     )
-    expect(container.querySelector('.mu-knob-tab')?.textContent).toBe('PAPER')
-
-    rerender(
-      <Knob
-        label="Vol."
-        positions={2}
-        index={0}
-        endLabels={['off', 'on']}
-        ariaLabel="Volume off. Toggle."
-        onClick={() => {}}
-      />,
+    expect(container.querySelector('.mu-knob-name')?.textContent).toBe('Thm.')
+    expect(container.querySelector('.mu-knob-val')?.textContent).toBe('PAPER')
+    expect(container.querySelector('.mu-knob')).not.toHaveAttribute(
+      'aria-pressed',
     )
-    expect(container.querySelector('.mu-knob-ends')?.textContent).toBe('offon')
   })
 })

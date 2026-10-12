@@ -152,6 +152,9 @@ export function Console({
     select: (s) => JSON.stringify(s.location.search),
   })
   const isHardcopy = pathname === '/cv'
+  // The design manual takes over the whole screen (like /cv) but keeps the live
+  // palette and drops the CRT chrome — a plain, single-scroll reading page.
+  const isGuide = pathname === '/guide'
 
   const [value, setValue] = useState('')
   const [log, setLog] = useState<Array<Block>>([])
@@ -228,7 +231,8 @@ export function Console({
     // is on when the visitor returns to the terminal.
     const lvl = audio.getLevel()
     setSoundLevel(lvl)
-    if (window.location.pathname === '/cv') return // no gate/boot on the printable route
+    const p = window.location.pathname
+    if (p === '/cv' || p === '/guide') return // no gate/boot on the standalone pages
     if (!audio.hasPreference()) {
       setShowGate(true)
     } else if (lvl !== 'off') {
@@ -252,9 +256,22 @@ export function Console({
   // player would otherwise stay null until a boot that never comes. arm() is
   // idempotent; we never replay the boot here.
   useEffect(() => {
-    if (pathname === '/cv') return
+    if (pathname === '/cv' || pathname === '/guide') return
     if (audio.getLevel() !== 'off') void audio.arm()
   }, [pathname])
+
+  // Track whether the visitor has navigated within the app, so the standalone
+  // pages' Back control can return to the previous view when there is in-app
+  // history, and fall back to the home/boot screen on a direct/external load.
+  const firstPath = useRef(pathname)
+  const hadInAppNav = useRef(false)
+  useEffect(() => {
+    if (pathname !== firstPath.current) hadInAppNav.current = true
+  }, [pathname])
+  function goBack() {
+    if (hadInAppNav.current) window.history.back()
+    else navigate({ to: '/' })
+  }
 
   // The hardcopy route forces the print palette; restore on leave.
   useEffect(() => {
@@ -680,7 +697,11 @@ export function Console({
 
   return (
     <section
-      className={'mu-console' + (focused ? ' mu-console--focus' : '')}
+      className={
+        'mu-console' +
+        (focused ? ' mu-console--focus' : '') +
+        (isGuide ? ' mu-console--guide' : '')
+      }
       aria-label="MU/TH/UR terminal"
     >
       <a className="mu-skip-link" href="#mu-main">
@@ -689,7 +710,18 @@ export function Console({
       <p className="mu-sr" role="status" aria-live="polite">
         {routeAnnounce}
       </p>
-      {isHardcopy ? (
+      {isGuide ? (
+        // The design manual: one back control — previous page, or home.
+        <div className="mu-guide-bar">
+          <button
+            type="button"
+            className="mu-toggle mu-cv-back"
+            onClick={goBack}
+          >
+            ◂ Back
+          </button>
+        </div>
+      ) : isHardcopy ? (
         // The printable CV drops the console chrome entirely — just a way back.
         <div className="mu-cv-bar">
           <button
@@ -710,29 +742,31 @@ export function Console({
           </div>
           <div className="mu-console-ctl">
             <Knob
-              label="Thm."
+              name="Thm."
+              value={PALETTE_TAB[palette]}
               positions={PALETTES.length}
               index={PALETTES.indexOf(palette as (typeof PALETTES)[number])}
-              colorTab={PALETTE_TAB[palette]}
               on
               onClick={cyclePalette}
               ariaLabel={`Theme: ${PALETTE_NAMES[palette]}. Change palette.`}
             />
             <Knob
-              label="CRT"
+              name="CRT"
+              value={fxOff ? 'OFF' : 'ON'}
               positions={2}
               index={fxOff ? 0 : 1}
-              endLabels={['off', 'on']}
               on={!fxOff}
+              pressed={!fxOff}
               onClick={toggleFx}
               ariaLabel={`CRT effects ${fxOff ? 'off' : 'on'}. Toggle.`}
             />
             <Knob
-              label="Vol."
+              name="Vol."
+              value={soundLevel === 'on' ? 'ON' : 'OFF'}
               positions={2}
               index={soundLevel === 'on' ? 1 : 0}
-              endLabels={['off', 'on']}
               on={soundLevel === 'on'}
+              pressed={soundLevel === 'on'}
               onClick={cycleVolume}
               ariaLabel={`Volume ${soundLevel}. Toggle.`}
             />
@@ -740,6 +774,11 @@ export function Console({
         </div>
       )}
 
+      {isGuide ? (
+        <main id="mu-main" role="main" tabIndex={-1} className="mu-guide-main">
+          {children}
+        </main>
+      ) : (
       <div
         className="mu-screen mu-screen-flicker mu-console-screen"
         inert={showGate}
@@ -1015,6 +1054,7 @@ export function Console({
           </div>
         ) : null}
       </div>
+      )}
 
       {showGate ? <SoundGate mode="choose" onChoose={chooseSound} /> : null}
       {showResume ? (

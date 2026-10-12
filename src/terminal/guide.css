@@ -42,9 +42,22 @@
   margin: 0;
 }
 
-/* Section heads */
+/* Section heads — real <h2>s (keyboard/landmark navigation), styled like a
+   labelled rule. */
 .mu-g-head {
   margin-bottom: var(--space-6);
+}
+.mu-g-h {
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--phosphor-faint);
+  font: var(--label-weight) var(--label-size) / 1.4 var(--font-mono);
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--phosphor);
+}
+.mu-g-h-n {
+  color: var(--phosphor-dim);
 }
 .mu-g-lead {
   max-width: var(--measure);
@@ -101,7 +114,6 @@
 }
 .mu-g-chip-hex {
   color: var(--phosphor-dim);
-  opacity: 0.85;
 }
 
 /* §2 Typography */
@@ -194,21 +206,6 @@
   gap: var(--space-3);
   font-size: var(--caption-size);
 }
-.mu-g-demo {
-  border: 1px solid var(--phosphor-faint);
-  padding: var(--space-4);
-  background: var(--crt-panel);
-}
-.mu-g-demo-label {
-  display: block;
-  font: var(--label-weight) var(--label-size) / var(--label-line)
-    var(--font-mono);
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
-  color: var(--phosphor-dim);
-  margin-bottom: var(--space-2);
-}
-
 /* §5 Components */
 .mu-g-gallery {
   display: grid;
