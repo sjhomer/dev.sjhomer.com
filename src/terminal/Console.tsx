@@ -26,6 +26,7 @@ import { useAutoScroll } from './useAutoScroll'
 import { SoundBoard } from './SoundBoard'
 import { SoundGate } from './SoundGate'
 import { Knob } from './Knob'
+import { PALETTES, PALETTE_NAMES, PALETTE_TAB, PaletteContext } from './palette'
 import './console.css'
 
 /**
@@ -47,7 +48,6 @@ const EGG_CONTROLS: Array<{ cmd: string; label: string; hint: string }> = [
   { cmd: 'ROLL D20', label: 'Roll D20', hint: 'roll the dice' },
 ]
 
-const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
 /** Self-destruct starts here; the countdown tick rises in pitch toward zero. */
 const DESTRUCT_FROM = 10
 /** The abort control escalates through these before it stands the alarm down. */
@@ -57,17 +57,6 @@ const ABORT_LABELS = [
   'ARE YOU REALLY REALLY SURE? RECONFIRM',
   'LAST CHANCE TO ABORT',
 ] as const
-const PALETTE_NAMES: Record<string, string> = {
-  mother: 'green',
-  sevastopol: 'amber',
-  hardcopy: 'hardcopy',
-}
-/** Short colour name shown on the palette knob's tab. */
-const PALETTE_TAB: Record<string, string> = {
-  mother: 'GREEN',
-  sevastopol: 'AMBER',
-  hardcopy: 'PAPER',
-}
 
 interface Block {
   id: number
@@ -719,417 +708,431 @@ export function Console({
   const pager = pageNav(pathname)
 
   return (
-    <section
-      className={
-        'mu-console' +
-        (focused ? ' mu-console--focus' : '') +
-        (isGuide ? ' mu-console--guide' : '')
-      }
-      aria-label="MU/TH/UR terminal"
-    >
-      <a className="mu-skip-link" href="#mu-main">
-        Skip to content
-      </a>
-      <p className="mu-sr" role="status" aria-live="polite">
-        {routeAnnounce}
-      </p>
-      {isGuide ? (
-        // The design manual: one back control — previous page, or home.
-        <div className="mu-guide-bar">
-          <button
-            type="button"
-            className="mu-toggle mu-cv-back"
-            onClick={goBack}
-          >
-            ◂ Back
-          </button>
-        </div>
-      ) : isHardcopy ? (
-        // The printable CV drops the console chrome entirely — just a way back.
-        <div className="mu-cv-bar">
-          <button
-            type="button"
-            className="mu-toggle mu-cv-back"
-            onClick={() => navigate({ to: '/transmit' })}
-          >
-            ◂ BACK TO TRANSMIT
-          </button>
-        </div>
-      ) : (
-        <div className="mu-console-strip" inert={showGate}>
-          <div className="mu-console-id">
-            <Link to="/" className="mu-console-home">
-              MU/TH/UR 6000
-            </Link>
-            <ShipClock />
+    <PaletteContext.Provider value={{ palette, cycle: cyclePalette }}>
+      <section
+        className={
+          'mu-console' +
+          (focused ? ' mu-console--focus' : '') +
+          (isGuide ? ' mu-console--guide' : '')
+        }
+        aria-label="MU/TH/UR terminal"
+      >
+        <a className="mu-skip-link" href="#mu-main">
+          Skip to content
+        </a>
+        <p className="mu-sr" role="status" aria-live="polite">
+          {routeAnnounce}
+        </p>
+        {isGuide ? (
+          // The design manual: one back control — previous page, or home.
+          <div className="mu-guide-bar">
+            <button
+              type="button"
+              className="mu-toggle mu-cv-back"
+              onClick={goBack}
+            >
+              ◂ Back
+            </button>
           </div>
-          <div className="mu-console-ctl">
-            <Knob
-              name="Thm."
-              value={PALETTE_TAB[palette]}
-              positions={PALETTES.length}
-              index={PALETTES.indexOf(palette as (typeof PALETTES)[number])}
-              on
-              onClick={cyclePalette}
-              ariaLabel={`Theme: ${PALETTE_NAMES[palette]}. Change palette.`}
-            />
-            <Knob
-              name="CRT"
-              value={fxOff ? 'OFF' : 'ON'}
-              positions={2}
-              index={fxOff ? 0 : 1}
-              on={!fxOff}
-              pressed={!fxOff}
-              onClick={toggleFx}
-              ariaLabel={`CRT effects ${fxOff ? 'off' : 'on'}. Toggle.`}
-            />
-            <Knob
-              name="Vol."
-              value={soundLevel === 'on' ? 'ON' : 'OFF'}
-              positions={2}
-              index={soundLevel === 'on' ? 1 : 0}
-              on={soundLevel === 'on'}
-              pressed={soundLevel === 'on'}
-              onClick={cycleVolume}
-              ariaLabel={`Volume ${soundLevel}. Toggle.`}
-            />
+        ) : isHardcopy ? (
+          // The printable CV drops the console chrome entirely — just a way back.
+          <div className="mu-cv-bar">
+            <button
+              type="button"
+              className="mu-toggle mu-cv-back"
+              onClick={() => navigate({ to: '/transmit' })}
+            >
+              ◂ BACK TO TRANSMIT
+            </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="mu-console-strip" inert={showGate}>
+            <div className="mu-console-id">
+              <Link to="/" className="mu-console-home">
+                MU/TH/UR 6000
+              </Link>
+              <ShipClock />
+            </div>
+            <div className="mu-console-ctl">
+              <Knob
+                name="Thmme"
+                value={PALETTE_TAB[palette]}
+                positions={PALETTES.length}
+                index={PALETTES.indexOf(palette as (typeof PALETTES)[number])}
+                on
+                onClick={cyclePalette}
+                ariaLabel={`Theme: ${PALETTE_NAMES[palette]}. Change palette.`}
+              />
+              <Knob
+                name="CRT"
+                value={fxOff ? 'OFF' : 'ON'}
+                positions={2}
+                index={fxOff ? 0 : 1}
+                on={!fxOff}
+                pressed={!fxOff}
+                onClick={toggleFx}
+                ariaLabel={`CRT effects ${fxOff ? 'off' : 'on'}. Toggle.`}
+              />
+              <Knob
+                name="Vol."
+                value={soundLevel === 'on' ? 'ON' : 'OFF'}
+                positions={2}
+                index={soundLevel === 'on' ? 1 : 0}
+                on={soundLevel === 'on'}
+                pressed={soundLevel === 'on'}
+                onClick={cycleVolume}
+                ariaLabel={`Volume ${soundLevel}. Toggle.`}
+              />
+            </div>
+          </div>
+        )}
 
-      {isGuide ? (
-        <main id="mu-main" role="main" tabIndex={-1} className="mu-guide-main">
-          {children}
-        </main>
-      ) : (
-        <div
-          className="mu-screen mu-screen-flicker mu-console-screen"
-          inert={showGate}
-        >
+        {isGuide ? (
+          <main
+            id="mu-main"
+            role="main"
+            tabIndex={-1}
+            className="mu-guide-main"
+          >
+            {children}
+          </main>
+        ) : (
           <div
-            className={
-              'mu-out-wrap' +
-              (moreUp ? ' more-up' : '') +
-              (moreDown ? ' more-down' : '') +
-              (autoScrolling ? ' auto-reading' : '')
-            }
+            className="mu-screen mu-screen-flicker mu-console-screen"
+            inert={showGate}
           >
             <div
-              className="mu-screen-body mu-console-out"
-              id="mu-main"
-              role="main"
-              tabIndex={-1}
-              ref={outRef}
+              className={
+                'mu-out-wrap' +
+                (moreUp ? ' more-up' : '') +
+                (moreDown ? ' more-down' : '') +
+                (autoScrolling ? ' auto-reading' : '')
+              }
             >
-              {eggMode ? (
-                <div className="mu-egg">
-                  <div className="mu-egg-bar">
-                    <button
-                      type="button"
-                      className="mu-reset"
-                      onClick={resetTerminal}
-                    >
-                      ↺ Reset terminal
-                    </button>
-                    <p className="mu-egg-warn">
-                      <span className="mu-egg-warn-dot" aria-hidden="true" />
-                      Unauthorised subsystem — you have strayed from the crew
-                      interface into restricted diagnostics. MOTHER sees this,
-                      and MOTHER does not care for the curious.
-                    </p>
-                  </div>
-                  {log.map((b, i) => (
-                    <React.Fragment key={b.id}>
-                      {/* A rule only between distinct eggs — i.e. before a block
+              <div
+                className="mu-screen-body mu-console-out"
+                id="mu-main"
+                role="main"
+                tabIndex={-1}
+                ref={outRef}
+              >
+                {eggMode ? (
+                  <div className="mu-egg">
+                    <div className="mu-egg-bar">
+                      <button
+                        type="button"
+                        className="mu-reset"
+                        onClick={resetTerminal}
+                      >
+                        ↺ Reset terminal
+                      </button>
+                      <p className="mu-egg-warn">
+                        <span className="mu-egg-warn-dot" aria-hidden="true" />
+                        Unauthorised subsystem — you have strayed from the crew
+                        interface into restricted diagnostics. MOTHER sees this,
+                        and MOTHER does not care for the curious.
+                      </p>
+                    </div>
+                    {log.map((b, i) => (
+                      <React.Fragment key={b.id}>
+                        {/* A rule only between distinct eggs — i.e. before a block
                         that echoes a new command. Continuation blocks printed by
                         the same egg (no echo, e.g. the destruct DETONATION
                         follow-up) stay attached to it. */}
-                      {i > 0 && b.echo ? (
-                        <hr className="mu-egg-rule" aria-hidden="true" />
-                      ) : null}
-                      <div className="mu-console-block">
-                        {b.echo ? (
-                          <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
+                        {i > 0 && b.echo ? (
+                          <hr className="mu-egg-rule" aria-hidden="true" />
                         ) : null}
-                        <TypeSequence
-                          lines={b.lines}
-                          onDone={
-                            b.widget ? () => markWidgetReady(b.id) : undefined
-                          }
-                        />
-                        {/* The widget waits for the block's title/hint to finish
+                        <div className="mu-console-block">
+                          {b.echo ? (
+                            <p className="mu-type mu-term-echo">
+                              &gt; {b.echo}
+                            </p>
+                          ) : null}
+                          <TypeSequence
+                            lines={b.lines}
+                            onDone={
+                              b.widget ? () => markWidgetReady(b.id) : undefined
+                            }
+                          />
+                          {/* The widget waits for the block's title/hint to finish
                           typing, then reveals itself (and cascades its pads). */}
-                        {b.widget === 'soundboard' && widgetReady.has(b.id) ? (
-                          <SoundBoard soundLevel={soundLevel} />
+                          {b.widget === 'soundboard' &&
+                          widgetReady.has(b.id) ? (
+                            <SoundBoard soundLevel={soundLevel} />
+                          ) : null}
+                        </div>
+                      </React.Fragment>
+                    ))}
+                    {destruct != null ? (
+                      <Alert
+                        title="Emergency destruct"
+                        level={destructAborted ? 'resolved' : 'alert'}
+                      >
+                        {!destructAborted ? (
+                          <p>
+                            THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN
+                          </p>
                         ) : null}
-                      </div>
-                    </React.Fragment>
-                  ))}
-                  {destruct != null ? (
-                    <Alert
-                      title="Emergency destruct"
-                      level={destructAborted ? 'resolved' : 'alert'}
-                    >
-                      {!destructAborted ? (
-                        <p>THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN</p>
-                      ) : null}
-                      {/* aria-hidden: the per-second tick must not re-fire the
+                        {/* aria-hidden: the per-second tick must not re-fire the
                         assertive role=alert announcement on every change. */}
-                      <p className="mu-countdown" aria-hidden="true">
-                        T-MINUS 00:
-                        {String(Math.max(0, destruct)).padStart(2, '0')}
-                      </p>
-                      {destructAborted ? (
-                        <p className="mu-destruct-done">DETONATION PREVENTED</p>
-                      ) : (
-                        <button
-                          type="button"
-                          className="mu-destruct-abort"
-                          onClick={abortDestruct}
-                        >
-                          {ABORT_LABELS[abortStep]}
-                        </button>
-                      )}
-                    </Alert>
-                  ) : null}
-                </div>
-              ) : (
-                // Keyed so resolving the sound gate remounts and replays the boot.
-                <React.Fragment key={bootKey}>{children}</React.Fragment>
-              )}
-            </div>
-            <span className="mu-scroll-cue" aria-hidden="true">
-              ▾ more below
-            </span>
-            {autoScrolling ? (
-              <span className="mu-autoread" aria-hidden="true">
-                ▾ AUTO-READ
-              </span>
-            ) : null}
-          </div>
-
-          {!isHardcopy ? (
-            <div className="mu-console-dock">
-              <div className="mu-dock-nav">
-                {eggMode ? (
-                  // Once an egg is active the numbered menu becomes an egg-control
-                  // panel of the six classified directives — set apart from the
-                  // sanctioned nav with a caution frame + a jittering header so it
-                  // reads as an off-book subsystem. Unlike the Queries menu this
-                  // one is kept visible on mobile too (handy for tapping eggs).
-                  <nav aria-label="Easter eggs" className="mu-egg-nav">
-                    <p
-                      className="mu-egg-nav-head"
-                      data-text="◈ Restricted — eyes only"
-                    >
-                      ◈ Restricted — eyes only
-                    </p>
-                    <ul className="mu-menu mu-menu-eggs">
-                      {EGG_CONTROLS.map((egg, i) => (
-                        <li key={egg.cmd}>
-                          <MenuOption
-                            index={String(i + 1)}
-                            label={egg.label}
-                            hint={egg.hint}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              run(egg.cmd)
-                              inputRef.current?.blur()
-                            }}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
-                ) : (
-                  <nav aria-label="Queries">
-                    <ul className="mu-menu">
-                      {MENU.map((q) => (
-                        <li key={q.name}>
-                          <MenuOption
-                            index={q.index!}
-                            label={q.label}
-                            hint={q.hint}
-                            href={q.path}
-                            active={pathname === q.path}
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              if (q.path) navigate({ to: q.path })
-                            }}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
-                )}
-
-                {suggestions.length ? (
-                  <div className="mu-suggest-panel" aria-label="Commands">
-                    {suggestions.some(
-                      (q) => q.group === 'query' || q.group === 'command',
-                    ) ? (
-                      <>
-                        <p className="mu-suggest-head">
-                          COMMANDS
-                          <span className="mu-suggest-head-filter">
-                            {' '}
-                            — TYPE TO FILTER
-                          </span>
+                        <p className="mu-countdown" aria-hidden="true">
+                          T-MINUS 00:
+                          {String(Math.max(0, destruct)).padStart(2, '0')}
                         </p>
-                        <ul className="mu-suggest">
-                          {suggestions
-                            .filter(
-                              (q) =>
-                                q.group === 'query' || q.group === 'command',
-                            )
-                            .map((q) => (
-                              <SuggestItem
-                                key={q.name}
-                                suggestion={q}
-                                onPick={pickSuggestion}
-                              />
-                            ))}
-                        </ul>
-                      </>
-                    ) : null}
-                    {/* The design manual gets its own section — a standalone
-                      reference, set apart from the runnable commands. */}
-                    {suggestions.some((q) => q.group === 'manual') ? (
-                      <>
-                        <p className="mu-suggest-head mu-suggest-head-manual">
-                          ◈ Design manual
-                        </p>
-                        <ul className="mu-suggest">
-                          {suggestions
-                            .filter((q) => q.group === 'manual')
-                            .map((q) => (
-                              <SuggestItem
-                                key={q.name}
-                                suggestion={q}
-                                onPick={pickSuggestion}
-                              />
-                            ))}
-                        </ul>
-                      </>
-                    ) : null}
-                    {/* The easter eggs get their own group so they read as the
-                      off-book, classified transmissions they are — set apart in
-                      caution amber under a RESTRICTED heading. */}
-                    {suggestions.some((q) => q.group === 'easter') ? (
-                      <>
-                        <p className="mu-suggest-head mu-suggest-head-easter">
-                          ◈ Restricted — eyes only
-                        </p>
-                        <ul className="mu-suggest">
-                          {suggestions
-                            .filter((q) => q.group === 'easter')
-                            .map((q) => (
-                              <SuggestItem
-                                key={q.name}
-                                suggestion={q}
-                                onPick={pickSuggestion}
-                              />
-                            ))}
-                        </ul>
-                      </>
+                        {destructAborted ? (
+                          <p className="mu-destruct-done">
+                            DETONATION PREVENTED
+                          </p>
+                        ) : (
+                          <button
+                            type="button"
+                            className="mu-destruct-abort"
+                            onClick={abortDestruct}
+                          >
+                            {ABORT_LABELS[abortStep]}
+                          </button>
+                        )}
+                      </Alert>
                     ) : null}
                   </div>
-                ) : null}
+                ) : (
+                  // Keyed so resolving the sound gate remounts and replays the boot.
+                  <React.Fragment key={bootKey}>{children}</React.Fragment>
+                )}
               </div>
-
-              <Prompt
-                value={value}
-                onChange={(v) => {
-                  setValue(v)
-                  if (error) setError('')
-                }}
-                onSubmit={(v) => {
-                  // Valid command (or selection): run, clear, and close the palette.
-                  // Invalid: keep focus open with the error showing.
-                  if (run(v)) {
-                    setValue('')
-                    inputRef.current?.blur()
-                  }
-                }}
-                onKeyDown={onKeyDown}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                inputRef={inputRef}
-                placeholder="Type a query, or a command"
-                label="Query MOTHER"
-              />
-              <button
-                type="button"
-                className="mu-prompt-mobile"
-                onClick={() => setPickerOpen((o) => !o)}
-                aria-expanded={pickerOpen}
-              >
-                <span className="mu-prompt-mobile-prefix" aria-hidden="true">
-                  &gt;
+              <span className="mu-scroll-cue" aria-hidden="true">
+                ▾ more below
+              </span>
+              {autoScrolling ? (
+                <span className="mu-autoread" aria-hidden="true">
+                  ▾ AUTO-READ
                 </span>
-                <span className="mu-prompt-mobile-label">
-                  Tap to Select a Command
-                </span>
-                <span className="mu-prompt-mobile-caret" aria-hidden="true">
-                  {pickerOpen ? '▴' : '▾'}
-                </span>
-              </button>
-              {error ? (
-                <p className="mu-prompt-error" role="alert">
-                  {error}
-                </p>
-              ) : null}
-              <div
-                className="mu-term-hints mu-hints-desktop"
-                aria-hidden="true"
-              >
-                <KeyCap>
-                  <span suppressHydrationWarning>{cmdKey}</span>
-                </KeyCap>{' '}
-                focus
-                <KeyCap>1</KeyCap>–<KeyCap>6</KeyCap> select
-                <KeyCap>Tab</KeyCap> complete
-                <KeyCap>↑</KeyCap> history
-                <KeyCap>Esc</KeyCap> home
-              </div>
-              {/* The mobile prev/next pager is suppressed in egg mode: the egg
-                controls take that row instead, and Reset terminal / the command
-                input are enough to get back to a page. */}
-              {!eggMode ? (
-                <nav className="mu-pager" aria-label="Page navigation">
-                  <button
-                    type="button"
-                    className="mu-pager-btn mu-pager-prev"
-                    onClick={() => navigate({ to: pager.prev.path })}
-                    aria-label={`Previous page: ${pager.prev.name}`}
-                  >
-                    <span aria-hidden="true">◂ </span>
-                    {pager.prev.name}
-                  </button>
-                  <button
-                    type="button"
-                    className="mu-pager-btn mu-pager-next"
-                    onClick={() => navigate({ to: pager.next.path })}
-                    aria-label={`Next page: ${pager.next.name}`}
-                  >
-                    {pager.next.name}
-                    <span aria-hidden="true"> ▸</span>
-                  </button>
-                </nav>
               ) : null}
             </div>
-          ) : null}
-        </div>
-      )}
 
-      {showGate ? <SoundGate mode="choose" onChoose={chooseSound} /> : null}
-      {showResume ? (
-        <SoundGate
-          mode="resume"
-          onResume={resumeSound}
-          onDismissResume={() => setShowResume(false)}
-        />
-      ) : null}
-    </section>
+            {!isHardcopy ? (
+              <div className="mu-console-dock">
+                <div className="mu-dock-nav">
+                  {eggMode ? (
+                    // Once an egg is active the numbered menu becomes an egg-control
+                    // panel of the six classified directives — set apart from the
+                    // sanctioned nav with a caution frame + a jittering header so it
+                    // reads as an off-book subsystem. Unlike the Queries menu this
+                    // one is kept visible on mobile too (handy for tapping eggs).
+                    <nav aria-label="Easter eggs" className="mu-egg-nav">
+                      <p
+                        className="mu-egg-nav-head"
+                        data-text="◈ Restricted — eyes only"
+                      >
+                        ◈ Restricted — eyes only
+                      </p>
+                      <ul className="mu-menu mu-menu-eggs">
+                        {EGG_CONTROLS.map((egg, i) => (
+                          <li key={egg.cmd}>
+                            <MenuOption
+                              index={String(i + 1)}
+                              label={egg.label}
+                              hint={egg.hint}
+                              onSelect={(e) => {
+                                e.preventDefault()
+                                run(egg.cmd)
+                                inputRef.current?.blur()
+                              }}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  ) : (
+                    <nav aria-label="Queries">
+                      <ul className="mu-menu">
+                        {MENU.map((q) => (
+                          <li key={q.name}>
+                            <MenuOption
+                              index={q.index!}
+                              label={q.label}
+                              hint={q.hint}
+                              href={q.path}
+                              active={pathname === q.path}
+                              onSelect={(e) => {
+                                e.preventDefault()
+                                if (q.path) navigate({ to: q.path })
+                              }}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  )}
+
+                  {suggestions.length ? (
+                    <div className="mu-suggest-panel" aria-label="Commands">
+                      {suggestions.some(
+                        (q) => q.group === 'query' || q.group === 'command',
+                      ) ? (
+                        <>
+                          <p className="mu-suggest-head">
+                            COMMANDS
+                            <span className="mu-suggest-head-filter">
+                              {' '}
+                              — TYPE TO FILTER
+                            </span>
+                          </p>
+                          <ul className="mu-suggest">
+                            {suggestions
+                              .filter(
+                                (q) =>
+                                  q.group === 'query' || q.group === 'command',
+                              )
+                              .map((q) => (
+                                <SuggestItem
+                                  key={q.name}
+                                  suggestion={q}
+                                  onPick={pickSuggestion}
+                                />
+                              ))}
+                          </ul>
+                        </>
+                      ) : null}
+                      {/* The design manual gets its own section — a standalone
+                      reference, set apart from the runnable commands. */}
+                      {suggestions.some((q) => q.group === 'manual') ? (
+                        <>
+                          <p className="mu-suggest-head mu-suggest-head-manual">
+                            ◈ Design manual
+                          </p>
+                          <ul className="mu-suggest">
+                            {suggestions
+                              .filter((q) => q.group === 'manual')
+                              .map((q) => (
+                                <SuggestItem
+                                  key={q.name}
+                                  suggestion={q}
+                                  onPick={pickSuggestion}
+                                />
+                              ))}
+                          </ul>
+                        </>
+                      ) : null}
+                      {/* The easter eggs get their own group so they read as the
+                      off-book, classified transmissions they are — set apart in
+                      caution amber under a RESTRICTED heading. */}
+                      {suggestions.some((q) => q.group === 'easter') ? (
+                        <>
+                          <p className="mu-suggest-head mu-suggest-head-easter">
+                            ◈ Restricted — eyes only
+                          </p>
+                          <ul className="mu-suggest">
+                            {suggestions
+                              .filter((q) => q.group === 'easter')
+                              .map((q) => (
+                                <SuggestItem
+                                  key={q.name}
+                                  suggestion={q}
+                                  onPick={pickSuggestion}
+                                />
+                              ))}
+                          </ul>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <Prompt
+                  value={value}
+                  onChange={(v) => {
+                    setValue(v)
+                    if (error) setError('')
+                  }}
+                  onSubmit={(v) => {
+                    // Valid command (or selection): run, clear, and close the palette.
+                    // Invalid: keep focus open with the error showing.
+                    if (run(v)) {
+                      setValue('')
+                      inputRef.current?.blur()
+                    }
+                  }}
+                  onKeyDown={onKeyDown}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  inputRef={inputRef}
+                  placeholder="Type a query, or a command"
+                  label="Query MOTHER"
+                />
+                <button
+                  type="button"
+                  className="mu-prompt-mobile"
+                  onClick={() => setPickerOpen((o) => !o)}
+                  aria-expanded={pickerOpen}
+                >
+                  <span className="mu-prompt-mobile-prefix" aria-hidden="true">
+                    &gt;
+                  </span>
+                  <span className="mu-prompt-mobile-label">
+                    Tap to Select a Command
+                  </span>
+                  <span className="mu-prompt-mobile-caret" aria-hidden="true">
+                    {pickerOpen ? '▴' : '▾'}
+                  </span>
+                </button>
+                {error ? (
+                  <p className="mu-prompt-error" role="alert">
+                    {error}
+                  </p>
+                ) : null}
+                <div
+                  className="mu-term-hints mu-hints-desktop"
+                  aria-hidden="true"
+                >
+                  <KeyCap>
+                    <span suppressHydrationWarning>{cmdKey}</span>
+                  </KeyCap>{' '}
+                  focus
+                  <KeyCap>1</KeyCap>–<KeyCap>6</KeyCap> select
+                  <KeyCap>Tab</KeyCap> complete
+                  <KeyCap>↑</KeyCap> history
+                  <KeyCap>Esc</KeyCap> home
+                </div>
+                {/* The mobile prev/next pager is suppressed in egg mode: the egg
+                controls take that row instead, and Reset terminal / the command
+                input are enough to get back to a page. */}
+                {!eggMode ? (
+                  <nav className="mu-pager" aria-label="Page navigation">
+                    <button
+                      type="button"
+                      className="mu-pager-btn mu-pager-prev"
+                      onClick={() => navigate({ to: pager.prev.path })}
+                      aria-label={`Previous page: ${pager.prev.name}`}
+                    >
+                      <span aria-hidden="true">◂ </span>
+                      {pager.prev.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="mu-pager-btn mu-pager-next"
+                      onClick={() => navigate({ to: pager.next.path })}
+                      aria-label={`Next page: ${pager.next.name}`}
+                    >
+                      {pager.next.name}
+                      <span aria-hidden="true"> ▸</span>
+                    </button>
+                  </nav>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {showGate ? <SoundGate mode="choose" onChoose={chooseSound} /> : null}
+        {showResume ? (
+          <SoundGate
+            mode="resume"
+            onResume={resumeSound}
+            onDismissResume={() => setShowResume(false)}
+          />
+        ) : null}
+      </section>
+    </PaletteContext.Provider>
   )
 }

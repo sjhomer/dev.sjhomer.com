@@ -28,6 +28,15 @@
   color: var(--phosphor-dim);
   margin: 0;
 }
+/* The title keeps the live Theme knob to its right, since the manual restyles
+   with the palette and has no header knobs of its own. */
+.mu-g-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
 .mu-g-title {
   font-family: var(--font-display);
   font-size: var(--display-xl-size);

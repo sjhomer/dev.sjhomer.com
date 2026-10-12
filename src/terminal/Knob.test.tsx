@@ -26,7 +26,7 @@ describe('Knob', () => {
   it('draws one notch per position', () => {
     const { container } = render(
       <Knob
-        name="Thm."
+        name="Theme"
         value="GREEN"
         positions={3}
         index={1}
@@ -59,7 +59,7 @@ describe('Knob', () => {
   it('reads the name and current value as a caption; a 3-way knob omits aria-pressed', () => {
     const { container } = render(
       <Knob
-        name="Thm."
+        name="Theme"
         value="PAPER"
         positions={3}
         index={2}
@@ -68,7 +68,7 @@ describe('Knob', () => {
         onClick={() => {}}
       />,
     )
-    expect(container.querySelector('.mu-knob-name')?.textContent).toBe('Thm.')
+    expect(container.querySelector('.mu-knob-name')?.textContent).toBe('Theme')
     expect(container.querySelector('.mu-knob-val')?.textContent).toBe('PAPER')
     expect(container.querySelector('.mu-knob')).not.toHaveAttribute(
       'aria-pressed',

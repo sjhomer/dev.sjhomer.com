@@ -9,13 +9,19 @@ import {
   Tag,
 } from '../components/muthur'
 import { Knob } from './Knob'
+import {
+  PALETTES as PALETTE_ORDER,
+  PALETTE_NAMES,
+  PALETTE_TAB,
+  usePalette,
+} from './palette'
 import './guide.css'
 
 /**
  * /guide — the MU/TH/UR Interface design manual. A static reference page (not a
  * typed terminal view) documenting the design system *as the final site uses
  * it*, with live swatches and real components. It inherits the active palette,
- * so the Thm. knob in the header restyles the whole manual in place.
+ * so the Theme knob in the header restyles the whole manual in place.
  */
 
 interface Swatch {
@@ -147,11 +153,27 @@ function GuideHead({
 }
 
 export function GuideSection(): React.ReactElement {
+  const pal = usePalette()
   return (
     <article className="mu-guide" aria-label="MU/TH/UR Interface design manual">
       <header className="mu-g-masthead">
         <p className="mu-g-kicker">MU/TH/UR INTERFACE · TECHNICAL MANUAL</p>
-        <h1 className="mu-g-title">DESIGN&nbsp;MANUAL</h1>
+        <div className="mu-g-title-row">
+          <h1 className="mu-g-title">DESIGN&nbsp;MANUAL</h1>
+          {pal ? (
+            <Knob
+              name="Theme"
+              value={PALETTE_TAB[pal.palette]}
+              positions={PALETTE_ORDER.length}
+              index={PALETTE_ORDER.indexOf(
+                pal.palette as (typeof PALETTE_ORDER)[number],
+              )}
+              on
+              onClick={pal.cycle}
+              ariaLabel={`Theme: ${PALETTE_NAMES[pal.palette]}. Change palette.`}
+            />
+          ) : null}
+        </div>
         <p className="mu-g-sub">
           The design system behind <strong>dev.sjhomer.com</strong>, documented
           against the shipped site. It began as a concept artifact — a token set
@@ -289,7 +311,7 @@ export function GuideSection(): React.ReactElement {
           <div className="mu-g-cell">
             <div className="mu-g-cell-demo mu-g-cell-knobs">
               <Knob
-                name="Thm."
+                name="Theme"
                 value="GREEN"
                 positions={3}
                 index={0}
