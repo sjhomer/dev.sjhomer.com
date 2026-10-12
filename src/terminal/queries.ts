@@ -82,27 +82,6 @@ export const QUERIES: Array<Query> = [
   },
 ]
 
-/** Transient commands that print to the log rather than routing. */
-export const BUILTINS = [
-  'HELP',
-  'CLEAR',
-  'ASK',
-  'JONESY',
-  'ROLL',
-  'OVERRIDE',
-  'DOWNLOAD',
-  'DEBUG',
-  'SOUND BOARD',
-] as const
-
-/** Everything a Tab/visible auto-complete can offer, uppercase. */
-export const COMPLETIONS: Array<string> = [
-  ...QUERIES.map((q) => q.name),
-  ...QUERIES.flatMap((q) => q.aliases ?? []),
-  ...BUILTINS,
-  'ASK ',
-]
-
 export const MENU = QUERIES.filter((q) => q.index && !q.offMenu)
 
 export interface PageLink {
@@ -160,6 +139,7 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: q.hint,
     group: 'query' as const,
   })),
+  { name: 'HELP', hint: 'list available queries', group: 'command' },
   // GUIDE is off the numbered menu but surfaced here so the design manual is
   // discoverable from the command palette (and Tab-completes).
   { name: 'GUIDE', hint: 'interface design manual', group: 'command' },

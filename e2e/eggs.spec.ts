@@ -144,3 +144,16 @@ test('self-destruct arms a countdown and OVERRIDE aborts it', async ({
   // The countdown box is gone once aborted.
   await expect(egg).not.toContainText('T-MINUS 00:')
 })
+
+test('HELP lists the available queries, including the design manual', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await waitForHydration(page)
+  await runCommand(page, 'HELP')
+
+  const egg = page.locator('.mu-egg')
+  await expect(egg).toContainText('AVAILABLE QUERIES', { timeout: 8000 })
+  await expect(egg).toContainText('GUIDE')
+  await expect(egg).toContainText('SOME DIRECTIVES ARE CLASSIFIED')
+})

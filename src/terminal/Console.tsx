@@ -14,6 +14,7 @@ import type { Suggestion } from './queries'
 import {
   askLines,
   debugLines,
+  helpLines,
   jonesyLines,
   rollDice,
   rollLines,
@@ -532,6 +533,12 @@ export function Console({
 
     if (cmd === 'CLEAR') {
       resetTerminal()
+      return true
+    }
+
+    if (cmd === 'HELP') {
+      setEggMode(true)
+      print(cmd, helpLines())
       return true
     }
 

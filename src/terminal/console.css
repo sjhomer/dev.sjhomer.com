@@ -1048,11 +1048,6 @@
   letter-spacing: 0.08em;
 }
 
-/* Mobile hints are hidden on desktop. */
-.mu-hints-mobile {
-  display: none;
-}
-
 /* Mobile pager: two labelled prev/next buttons that replace swipe nav.
    Hidden on desktop (the numbered menu covers it); shown at phone widths. */
 .mu-pager {
@@ -1148,18 +1143,6 @@
   }
   .mu-hints-desktop {
     display: none;
-  }
-  .mu-hints-mobile {
-    display: block;
-    margin: 0;
-    text-align: center;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-  .mu-swipe {
-    color: var(--phosphor);
-    letter-spacing: 0.12em;
-    white-space: nowrap;
   }
   .mu-suggest-panel {
     max-height: 62vh;

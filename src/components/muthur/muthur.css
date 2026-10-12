@@ -4,11 +4,6 @@
  * the body base live in src/styles.css, so they are omitted here.
  */
 
-.mu-pad {
-  padding: var(--space-6);
-  display: grid;
-  gap: var(--space-4);
-}
 .mu-row {
   display: flex;
   flex-wrap: wrap;
@@ -543,13 +538,6 @@
 .mu-term {
   display: grid;
   gap: var(--space-3);
-}
-.mu-term-log {
-  display: grid;
-  gap: var(--space-3);
-  max-height: 340px;
-  overflow-y: auto;
-  scrollbar-color: var(--phosphor-dim) transparent;
 }
 .mu-term-echo {
   color: var(--phosphor-dim);
