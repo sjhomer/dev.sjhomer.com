@@ -42,6 +42,21 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * Pre-animation gate. The server renders the full content (so no-JS / crawlers
+ * get everything), but a JS client collapses it to replay the line-by-line
+ * typing — which would otherwise flash the whole record in first. A tiny inline
+ * script in <head> adds `mu-js` before first paint, so for JS clients the output
+ * stays hidden until the console mounts and adds `mu-ready` (by which point the
+ * sections have collapsed and the typing has taken over). No-JS clients never
+ * get `mu-js`, so they see the content immediately; a 4s failsafe in the head
+ * reveals it even if the app never mounts. visibility (not display) keeps the
+ * layout stable, so nothing shifts when it reveals.
+ */
+html.mu-js:not(.mu-ready) .mu-console-out {
+  visibility: hidden;
+}
+
 /* Screen-reader-only text: typed output ships in the DOM from first paint. */
 .sr-only {
   position: absolute;
