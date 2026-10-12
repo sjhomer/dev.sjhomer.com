@@ -458,14 +458,17 @@
   color: var(--caution);
 }
 .mu-suggest-item:hover,
-.mu-suggest-item:focus-visible {
+.mu-suggest-item:focus-visible,
+.mu-suggest-item[data-active] {
   background: var(--phosphor);
   color: var(--on-phosphor);
   text-shadow: none;
   outline: none;
 }
 .mu-suggest-item:hover .mu-suggest-name,
-.mu-suggest-item:hover .mu-suggest-hint {
+.mu-suggest-item:hover .mu-suggest-hint,
+.mu-suggest-item[data-active] .mu-suggest-name,
+.mu-suggest-item[data-active] .mu-suggest-hint {
   color: var(--on-phosphor);
 }
 .mu-suggest-hint {
