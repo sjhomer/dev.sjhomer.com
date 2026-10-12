@@ -17,6 +17,7 @@ export function helpLines(): Array<Line> {
     'QUARTERS         life off-duty',
     'TRANSMIT         open a channel',
     'CV               plain printable resume',
+    'GUIDE            interface design manual',
     'ASK <QUESTION>   put a question to MOTHER',
     'CLEAR            clear the screen',
   ]

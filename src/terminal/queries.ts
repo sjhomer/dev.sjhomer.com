@@ -72,6 +72,14 @@ export const QUERIES: Array<Query> = [
     aliases: ['PRINT CV', 'RESUME'],
     offMenu: true,
   },
+  {
+    name: 'GUIDE',
+    label: 'Design manual',
+    hint: 'interface style guide',
+    path: '/guide',
+    aliases: ['STYLE GUIDE', 'DESIGN GUIDE', 'MANUAL'],
+    offMenu: true,
+  },
 ]
 
 /** Transient commands that print to the log rather than routing. */
@@ -152,6 +160,9 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: q.hint,
     group: 'query' as const,
   })),
+  // GUIDE is off the numbered menu but surfaced here so the design manual is
+  // discoverable from the command palette (and Tab-completes).
+  { name: 'GUIDE', hint: 'interface design manual', group: 'command' },
   {
     name: 'SPECIAL ORDER 937',
     hint: 'science officer eyes only',

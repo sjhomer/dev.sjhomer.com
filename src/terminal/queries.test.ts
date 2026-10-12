@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { PAGE_ORDER, complete, pageNav, suggest } from './queries'
+import {
+  PAGE_ORDER,
+  complete,
+  pageNav,
+  resolvePath,
+  suggest,
+} from './queries'
 
 describe('suggest (visible command menu)', () => {
   it('omits CV, ASK, DOWNLOAD and the per-employer LOG filters', () => {
@@ -19,6 +25,18 @@ describe('suggest (visible command menu)', () => {
     // ...and they complete from a prefix (so Tab works in the prompt).
     expect(complete('DEBUG')).toBe('DEBUG')
     expect(complete('SOUND')).toBe('SOUND BOARD')
+  })
+
+  it('surfaces the design manual (GUIDE): off-menu but routable + discoverable', () => {
+    // Off the numbered menu, but reachable by command and its aliases.
+    expect(resolvePath('GUIDE')).toBe('/guide')
+    expect(resolvePath('STYLE GUIDE')).toBe('/guide')
+    expect(resolvePath('MANUAL')).toBe('/guide')
+    // Surfaced in the command palette and Tab-completes.
+    expect(suggest('').map((s) => s.name)).toContain('GUIDE')
+    expect(complete('GUI')).toBe('GUIDE')
+    // ...but not on the six-query numbered menu.
+    expect(PAGE_ORDER.map((p) => p.path)).not.toContain('/guide')
   })
 
   it('still lists the six primary queries', () => {

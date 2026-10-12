@@ -391,9 +391,10 @@ export function Console({
   }, [pathname, searchStr])
 
   // Reading-paced auto-scroll on the content routes (not eggs, not the printable
-  // /cv). It restarts per view (route or filter) and pauses on the first scroll.
+  // /cv, not the browse-at-your-own-pace /guide). It restarts per view (route or
+  // filter) and pauses on the first scroll.
   const autoScrolling = useAutoScroll(outRef, {
-    active: !eggMode && !isHardcopy,
+    active: !eggMode && !isHardcopy && pathname !== '/guide',
     resetKey: pathname + searchStr,
   })
 
