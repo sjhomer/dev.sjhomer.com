@@ -14,13 +14,6 @@ const data: Array<Mission> = [
     era: 'Personal',
     brief:
       'A developer portfolio disguised as the MU/TH/UR 6000, the ship’s computer from Alien. Inspired by a lifelong love of science fiction and the retro-futurist terminals of the Alien franchise, you boot the mainframe and query the crew file — and every answer types back in cold green phosphor. The terminal is the navigation, with synced original sound effects, line-by-line type rendering, three palettes, and a trove of easter eggs. A fun, expressive experiment in showing a career as something you interrogate rather than scroll.',
-    approach: [
-      'Designed up front as three linked concept artifacts — a solution plan, a “MU/TH/UR Interface” design system, and an interactive mockup — then built to match.',
-      'Hand-rolled terminal engine: self-timing primitives type content line by line, with holds, pauses and mid-line “morphs”.',
-      'One typed, Zod-validated content model feeds the terminal, the printable /cv, JSON-LD and the generated PDF/OG images.',
-      'Progressive enhancement on TanStack Start — server-rendered complete, then enhanced on the client; deployed to Cloudflare Workers.',
-      'Every sound is original Web Audio synthesis (no sampled film audio); easter eggs run from SPECIAL ORDER 937 to a full emergency-destruct sequence.',
-    ],
     tech: [
       'React 19',
       'TanStack Start',

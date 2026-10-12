@@ -235,11 +235,6 @@ export function MissionsSection(): React.ReactElement {
           </div>
           <h3 className="mu-log-title">{m.title}</h3>
           <Typewriter text={m.brief} />
-          {m.approach?.length ? (
-            <TypeSequence
-              lines={m.approach.map((text) => ({ text: '■ ' + text }))}
-            />
-          ) : null}
           {m.tech.length ? (
             <div className="mu-row">
               {m.tech.map((t) => (
@@ -273,6 +268,7 @@ export function MissionsSection(): React.ReactElement {
                     rel="noopener noreferrer"
                   >
                     {l.label}
+                    <span className="mu-sr"> (opens in new tab)</span>
                   </a>
                 </React.Fragment>
               ))}

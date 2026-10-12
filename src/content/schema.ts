@@ -60,8 +60,6 @@ export const missionSchema = z.object({
   title: z.string().min(1),
   metric: z.string().optional(),
   brief: z.string().min(1),
-  /** Optional "how it was approached" bullets, rendered under the brief. */
-  approach: z.array(z.string().min(1)).optional(),
   tech: z.array(z.string()).default([]),
   services: z.array(z.string()).default([]),
   /** A single primary link (legacy); use `links` for several named references. */

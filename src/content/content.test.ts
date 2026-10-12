@@ -64,9 +64,8 @@ describe('content model', () => {
     expect(missions[1].id).toBe('battlefy-player-hub')
   })
 
-  it('gives the portfolio entry approach bullets and named links', () => {
+  it('gives the portfolio entry named links', () => {
     const site = missions.find((m) => m.id === 'dev-sjhomer-portfolio')!
-    expect(site.approach && site.approach.length).toBeGreaterThan(0)
     expect(site.links?.map((l) => l.href)).toContain('https://dev.sjhomer.com')
   })
 
