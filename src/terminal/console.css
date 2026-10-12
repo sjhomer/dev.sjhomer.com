@@ -1252,8 +1252,9 @@
 }
 
 /* --- Sound gate ----------------------------------------------------------- */
-/* First-load modal: halts the boot behind an opaque phosphor overlay until the
-   visitor opts in or out. The click is also the browser's autoplay unlock. */
+/* First-visit welcome modal: halts the boot behind an opaque phosphor overlay
+   until the visitor enters. ENTER TERMINAL enters with audio on (the click is
+   also the browser's autoplay unlock); Escape enters silently. */
 .mu-sound-gate {
   position: fixed;
   inset: 0;

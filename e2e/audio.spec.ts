@@ -12,28 +12,30 @@ async function seedSound(page: Page, level: string) {
   }, level)
 }
 
-test('first visit shows the sound gate and bypass dismisses it silently', async ({
+test('first visit shows the welcome gate and entering enables sound', async ({
   page,
 }) => {
-  // Fresh context → no stored preference → the gate must appear and halt boot.
+  // Fresh context → no stored preference → the welcome modal must appear and
+  // halt boot. Entering via the single button enables interface audio.
   await page.goto('/')
-  const dialog = page.getByRole('dialog', { name: /ENABLE INTERFACE AUDIO/i })
+  const dialog = page.getByRole('dialog', { name: /WELCOME/i })
   await expect(dialog).toBeVisible()
 
-  await page.getByRole('button', { name: /BYPASS/i }).click()
+  await page.getByRole('button', { name: /ENTER TERMINAL/i }).click()
 
   await expect(dialog).toBeHidden()
   await expect(
     page.getByRole('heading', { name: /MU\/TH\/UR 6000/ }),
   ).toBeVisible()
-  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe(
-    'off',
-  )
+  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe('on')
 })
 
-test('pressing Escape on the gate bypasses it silently', async ({ page }) => {
+test('pressing Escape on the welcome gate enters silently', async ({
+  page,
+}) => {
+  // Escape is the silent-entry fallback (there is no explicit silent button).
   await page.goto('/')
-  const dialog = page.getByRole('dialog', { name: /ENABLE INTERFACE AUDIO/i })
+  const dialog = page.getByRole('dialog', { name: /WELCOME/i })
   await expect(dialog).toBeVisible()
 
   await page.keyboard.press('Escape')
@@ -44,15 +46,13 @@ test('pressing Escape on the gate bypasses it silently', async ({ page }) => {
   )
 })
 
-test('choosing the authentic experience records a sound level', async ({
-  page,
-}) => {
+test('the welcome gate discloses the Vol. mute control', async ({ page }) => {
   await page.goto('/')
-  await expect(
-    page.getByRole('dialog', { name: /ENABLE INTERFACE AUDIO/i }),
-  ).toBeVisible()
-  await page.getByRole('button', { name: /AUTHENTIC EXPERIENCE/i }).click()
-  expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe('on')
+  const dialog = page.getByRole('dialog', { name: /WELCOME/i })
+  await expect(dialog).toBeVisible()
+  // The body must point returning control to the top-nav Vol. knob.
+  await expect(dialog).toContainText(/Vol\./)
+  await expect(dialog).toContainText(/mute/i)
 })
 
 /** The ship clock only ticks after client hydration — a reliable interactive signal. */
