@@ -385,12 +385,9 @@ export function Console({
 
   // Reading-paced auto-scroll on the content routes (not eggs, not the printable
   // /cv). It restarts per view (route or filter) and pauses on the first scroll.
-  // The service log prints strictly line by line, so give it a longer lead-in
-  // (4s) before auto-read starts — on first load and on every filter change.
   const autoScrolling = useAutoScroll(outRef, {
     active: !eggMode && !isHardcopy,
     resetKey: pathname + searchStr,
-    startDelayMs: pathname === '/log' ? 4000 : undefined,
   })
 
   // Konami → Sevastopol; number keys select; Escape returns home.
