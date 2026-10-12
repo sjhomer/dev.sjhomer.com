@@ -10,10 +10,12 @@ export interface SoundGateProps {
 }
 
 /**
- * The first-load audio gate. In `choose` mode it is a modal overlay that halts
- * the boot until the visitor opts in or out (the click doubles as the browser's
- * autoplay-unlock gesture). In `resume` mode it is a small one-click prompt
- * shown to returning visitors when the browser blocks an audible boot.
+ * The first-visit welcome gate. In `choose` mode it is a modal overlay that
+ * halts the boot until the visitor enters: the single "ENTER TERMINAL" button
+ * enters with audio enabled (the click doubles as the browser's autoplay-unlock
+ * gesture), while Escape enters silently. Audio can be muted afterwards from the
+ * Vol. knob. In `resume` mode it is a small one-click prompt shown to returning
+ * visitors when the browser blocks an audible boot.
  */
 export function SoundGate({
   mode,
@@ -79,14 +81,14 @@ export function SoundGate({
       aria-labelledby="mu-sound-gate-title"
     >
       <div className="mu-sound-gate-panel" ref={panelRef}>
-        <p className="mu-sound-gate-kicker">MU/TH/UR 6000 · AUDIO SUBSYSTEM</p>
+        <p className="mu-sound-gate-kicker">MU/TH/UR 6000 · WELCOME</p>
         <h2 id="mu-sound-gate-title" className="mu-sound-gate-title">
-          ENABLE INTERFACE AUDIO?
+          WELCOME ABOARD, OPERATOR
         </h2>
         <p className="mu-sound-gate-body">
-          This terminal can play its boot sequence and keystroke feedback.
-          Engage the authentic experience, or continue in silence. You can
-          change this anytime with the VOLUME control.
+          Interface audio is <strong>enabled</strong> — boot tones and keystroke
+          feedback for the full experience. You can mute it anytime from the{' '}
+          <strong>Vol.</strong> knob in the top navigation.
         </p>
         <div className="mu-sound-gate-actions">
           <button
@@ -95,14 +97,7 @@ export function SoundGate({
             onClick={() => onChoose?.(true)}
             autoFocus
           >
-            ▸ AUTHENTIC EXPERIENCE
-          </button>
-          <button
-            type="button"
-            className="mu-toggle"
-            onClick={() => onChoose?.(false)}
-          >
-            BYPASS · SILENT
+            ▸ ENTER TERMINAL
           </button>
         </div>
       </div>
