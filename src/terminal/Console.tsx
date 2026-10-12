@@ -755,7 +755,7 @@ export function Console({
             </div>
             <div className="mu-console-ctl">
               <Knob
-                name="Thmme"
+                name="Theme"
                 value={PALETTE_TAB[palette]}
                 positions={PALETTES.length}
                 index={PALETTES.indexOf(palette as (typeof PALETTES)[number])}
