@@ -188,9 +188,9 @@ export function Console({
   const [bootKey, setBootKey] = useState(0)
   const [routeAnnounce, setRouteAnnounce] = useState('')
   const [destruct, setDestruct] = useState<number | null>(null)
-  // Self-destruct: aborted freezes the countdown and stands the alarm down;
-  // abortStep tracks the escalating re-confirm clicks on the abort control.
-  const [destructAborted, setDestructAborted] = useState(false)
+  // Self-destruct: abortStep tracks the escalating re-confirm clicks on the
+  // abort control. Standing the alarm down (abort or OVERRIDE) resolves into a
+  // log block and clears `destruct`, so there is no frozen trailing widget.
   const [abortStep, setAbortStep] = useState(0)
   const [focused, setFocused] = useState(false)
   // Highlighted row within the (visually ordered) suggestion listing while it is
@@ -321,7 +321,6 @@ export function Console({
     setLog([])
     setWidgetReady(new Set())
     setDestruct(null)
-    setDestructAborted(false)
     setAbortStep(0)
     setPickerOpen(false)
     outRef.current?.scrollTo({ top: 0 })
@@ -343,7 +342,6 @@ export function Console({
     setLog([])
     setWidgetReady(new Set())
     setDestruct(null)
-    setDestructAborted(false)
     setAbortStep(0)
     setError('')
   }
@@ -386,8 +384,8 @@ export function Console({
   // Self-destruct countdown, with a rising tick each second and a pleasant
   // all-clear chime when the sequence resolves safely (it was never real).
   useEffect(() => {
-    // Aborted freezes the timer where it stood; inactive does nothing.
-    if (destruct == null || destructAborted) return undefined
+    // Inactive (or stood down → cleared) does nothing.
+    if (destruct == null) return undefined
     if (destruct <= 0) {
       audio.allClear()
       print(undefined, [
@@ -407,19 +405,36 @@ export function Console({
       1000,
     )
     return () => clearTimeout(t)
-  }, [destruct, destructAborted])
+  }, [destruct])
+
+  // Stand the alarm down (from the abort control or the OVERRIDE command): emit
+  // the all-clear as a log block — in chronological order, mirroring the
+  // detonation path — and clear the live countdown widget. Printing the result
+  // instead of freezing the trailing widget keeps it in place when more eggs
+  // run afterwards (otherwise "DETONATION PREVENTED" pinned to the bottom).
+  function standDownDestruct() {
+    print(undefined, [
+      {
+        text: 'DETONATION PREVENTED. THE NOSTROMO — AND THIS PORTFOLIO — STAND DOWN.',
+        tone: 'caution',
+        cps: 60,
+      },
+    ])
+    setDestruct(null)
+    setAbortStep(0)
+    void audio.arm().then(() => audio.allClear())
+  }
 
   // The abort control: each click escalates the re-confirm; the final click
-  // stands the alarm down (freezes the timer, keeps the widget as "prevented").
+  // stands the alarm down.
   function abortDestruct() {
-    if (destruct == null || destructAborted) return
+    if (destruct == null) return
     if (abortStep < ABORT_LABELS.length - 1) {
       setAbortStep((s) => s + 1)
       if (soundLevel !== 'off') void audio.arm().then(() => audio.click())
       return
     }
-    setDestructAborted(true)
-    void audio.arm().then(() => audio.allClear())
+    standDownDestruct()
   }
 
   // Easter-egg view follows its own output to the bottom (terminal-style) —
@@ -677,7 +692,6 @@ export function Console({
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
       setEggMode(true)
       setDestruct(DESTRUCT_FROM)
-      setDestructAborted(false)
       setAbortStep(0)
       print(cmd, [
         { text: 'EMERGENCY DESTRUCT SEQUENCE ARMED.', tone: 'alert' },
@@ -688,9 +702,8 @@ export function Console({
       setEggMode(true)
       // The abort control in the widget is the advertised way out; OVERRIDE
       // stays as a hidden shortcut to the same stand-down.
-      if (destruct != null && !destructAborted) {
-        setDestructAborted(true)
-        void audio.arm().then(() => audio.allClear())
+      if (destruct != null) {
+        standDownDestruct()
       } else {
         print(cmd, [
           { text: 'NO SEQUENCE TO OVERRIDE.', tone: 'dim', cps: 240 },
@@ -955,34 +968,21 @@ export function Console({
                       </React.Fragment>
                     ))}
                     {destruct != null ? (
-                      <Alert
-                        title="Emergency destruct"
-                        level={destructAborted ? 'resolved' : 'alert'}
-                      >
-                        {!destructAborted ? (
-                          <p>
-                            THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN
-                          </p>
-                        ) : null}
+                      <Alert title="Emergency destruct" level="alert">
+                        <p>THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN</p>
                         {/* aria-hidden: the per-second tick must not re-fire the
                         assertive role=alert announcement on every change. */}
                         <p className="mu-countdown" aria-hidden="true">
                           T-MINUS 00:
                           {String(Math.max(0, destruct)).padStart(2, '0')}
                         </p>
-                        {destructAborted ? (
-                          <p className="mu-destruct-done">
-                            DETONATION PREVENTED
-                          </p>
-                        ) : (
-                          <button
-                            type="button"
-                            className="mu-destruct-abort"
-                            onClick={abortDestruct}
-                          >
-                            {ABORT_LABELS[abortStep]}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="mu-destruct-abort"
+                          onClick={abortDestruct}
+                        >
+                          {ABORT_LABELS[abortStep]}
+                        </button>
                       </Alert>
                     ) : null}
                   </div>

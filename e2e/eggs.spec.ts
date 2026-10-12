@@ -148,11 +148,39 @@ test('self-destruct arms a countdown; the abort control stands it down', async (
   await expect(abort).toHaveText(/LAST CHANCE/)
   await abort.click()
 
-  // Aborted: unlike a detonation, the widget stays — now "prevented", with the
-  // timer frozen (still shown) and the abort control gone.
+  // Stood down: the live countdown widget is cleared (no frozen timer, no abort
+  // control) and the all-clear resolves into the log, like a detonation does.
   await expect(egg).toContainText('DETONATION PREVENTED')
-  await expect(egg).toContainText('T-MINUS 00:')
   await expect(page.locator('.mu-destruct-abort')).toHaveCount(0)
+  await expect(page.locator('.mu-countdown')).toHaveCount(0)
+})
+
+test('an aborted self-destruct stays in order when a later egg runs', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await waitForHydration(page)
+  await runCommand(page, "WHAT'S THE STORY MOTHER")
+
+  const egg = page.locator('.mu-egg')
+  await expect(egg).toContainText('EMERGENCY DESTRUCT SEQUENCE ARMED', {
+    timeout: 8000,
+  })
+  const abort = page.locator('.mu-destruct-abort')
+  for (let i = 0; i < 4; i++) await abort.click()
+  await expect(egg).toContainText('DETONATION PREVENTED')
+
+  // Run another egg afterwards.
+  await runCommand(page, 'DEBUG')
+  await expect(egg).toContainText('SELF-DIAGNOSTIC', { timeout: 8000 })
+
+  // The aborted result must stay in chronological order (above the newer egg's
+  // output), not pinned to the bottom of the egg view below it.
+  const prevented = egg.getByText('DETONATION PREVENTED')
+  const laterEgg = egg.getByText('SELF-DIAGNOSTIC').first()
+  const py = (await prevented.boundingBox())!.y
+  const ly = (await laterEgg.boundingBox())!.y
+  expect(py).toBeLessThan(ly)
 })
 
 test('HELP lists the available queries, including the design manual', async ({
