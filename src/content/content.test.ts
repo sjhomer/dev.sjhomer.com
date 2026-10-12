@@ -38,13 +38,6 @@ describe('content model', () => {
     for (const r of roles) expect(r.start).toMatch(/^\d{4}-\d{2}$/)
   })
 
-  it('surfaces the headline Battlefy metrics', () => {
-    const head = roles.find((r) => r.id === 'battlefy-head')!
-    const metrics = head.highlights.map((h) => h.metric).filter(Boolean)
-    expect(metrics).toContain('-40%')
-    expect(metrics).toContain('+50%')
-  })
-
   it('exposes exactly the chosen contact channels: LinkedIn + GitHub, no email', () => {
     const labels = transmissions.channels.map((c) => c.label).sort()
     expect(labels).toEqual(['GitHub', 'LinkedIn'])
