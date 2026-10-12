@@ -729,7 +729,7 @@ export function ProgressBar(props: ProgressBarProps): React.ReactElement {
 
 export interface AlertProps {
   title: string
-  level?: 'alert' | 'caution'
+  level?: 'alert' | 'caution' | 'resolved'
   children?: React.ReactNode
   className?: string
 }
@@ -740,6 +740,7 @@ export function Alert(props: AlertProps): React.ReactElement {
       className={cx(
         'mu-alert',
         level === 'caution' && 'mu-alert-caution',
+        level === 'resolved' && 'mu-alert-resolved',
         props.className,
       )}
       role={level === 'alert' ? 'alert' : 'status'}

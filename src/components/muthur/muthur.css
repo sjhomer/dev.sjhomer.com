@@ -370,8 +370,48 @@
   background: var(--caution);
   animation: none;
 }
+/* Resolved: the alarm stood down — normal phosphor, no glow, no blink. */
+.mu-alert-resolved {
+  border-color: var(--phosphor-dim);
+  color: var(--phosphor);
+  box-shadow: none;
+  text-shadow: var(--glow-sm);
+}
+.mu-alert-resolved .mu-alert-title {
+  background: var(--phosphor-dim);
+  color: var(--on-phosphor);
+  text-shadow: none;
+  animation: none;
+}
 .mu-alert p {
   margin: 0;
+}
+/* Self-destruct abort control: escalating re-confirm, then stands the alarm down. */
+.mu-destruct-abort {
+  justify-self: start;
+  font: var(--label-weight) var(--label-size) / 1 var(--font-mono);
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--alert);
+  background: none;
+  border: 1px solid var(--alert);
+  border-radius: var(--radius-none);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+.mu-destruct-abort:hover,
+.mu-destruct-abort:focus-visible {
+  background: var(--alert);
+  color: var(--on-phosphor);
+}
+.mu-destruct-done {
+  justify-self: start;
+  font: var(--label-weight) var(--label-size) / 1 var(--font-mono);
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--phosphor);
+  border: 1px solid var(--phosphor-dim);
+  padding: var(--space-2) var(--space-3);
 }
 @keyframes mu-alarm {
   50% {

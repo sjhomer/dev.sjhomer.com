@@ -124,7 +124,7 @@ test('SOUND BOARD shows the pads, respects mute, and the menu becomes egg contro
   })
 })
 
-test('self-destruct arms a countdown and OVERRIDE aborts it', async ({
+test('self-destruct arms a countdown; the abort control stands it down', async ({
   page,
 }) => {
   await page.goto('/')
@@ -137,12 +137,22 @@ test('self-destruct arms a countdown and OVERRIDE aborts it', async ({
   })
   await expect(egg).toContainText('T-MINUS 00:')
 
-  await runCommand(page, 'OVERRIDE')
-  await expect(egg).toContainText('DESTRUCT SEQUENCE ABORTED', {
-    timeout: 8000,
-  })
-  // The countdown box is gone once aborted.
-  await expect(egg).not.toContainText('T-MINUS 00:')
+  // The abort control escalates through re-confirmations before it stands down.
+  const abort = page.locator('.mu-destruct-abort')
+  await expect(abort).toHaveText('ABORT')
+  await abort.click()
+  await expect(abort).toHaveText(/ARE YOU SURE/)
+  await abort.click()
+  await expect(abort).toHaveText(/REALLY REALLY SURE/)
+  await abort.click()
+  await expect(abort).toHaveText(/LAST CHANCE/)
+  await abort.click()
+
+  // Aborted: unlike a detonation, the widget stays — now "prevented", with the
+  // timer frozen (still shown) and the abort control gone.
+  await expect(egg).toContainText('DETONATION PREVENTED')
+  await expect(egg).toContainText('T-MINUS 00:')
+  await expect(page.locator('.mu-destruct-abort')).toHaveCount(0)
 })
 
 test('HELP lists the available queries, including the design manual', async ({

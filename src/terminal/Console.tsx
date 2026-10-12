@@ -50,6 +50,13 @@ const EGG_CONTROLS: Array<{ cmd: string; label: string; hint: string }> = [
 const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
 /** Self-destruct starts here; the countdown tick rises in pitch toward zero. */
 const DESTRUCT_FROM = 10
+/** The abort control escalates through these before it stands the alarm down. */
+const ABORT_LABELS = [
+  'ABORT',
+  'ARE YOU SURE? RECONFIRM',
+  'ARE YOU REALLY REALLY SURE? RECONFIRM',
+  'LAST CHANCE TO ABORT',
+] as const
 const PALETTE_NAMES: Record<string, string> = {
   mother: 'green',
   sevastopol: 'amber',
@@ -166,6 +173,10 @@ export function Console({
   const [bootKey, setBootKey] = useState(0)
   const [routeAnnounce, setRouteAnnounce] = useState('')
   const [destruct, setDestruct] = useState<number | null>(null)
+  // Self-destruct: aborted freezes the countdown and stands the alarm down;
+  // abortStep tracks the escalating re-confirm clicks on the abort control.
+  const [destructAborted, setDestructAborted] = useState(false)
+  const [abortStep, setAbortStep] = useState(0)
   const [focused, setFocused] = useState(false)
   // Mobile: the prompt is a button that opens the command picker (no typing).
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -289,6 +300,8 @@ export function Console({
     setLog([])
     setWidgetReady(new Set())
     setDestruct(null)
+    setDestructAborted(false)
+    setAbortStep(0)
     setPickerOpen(false)
     outRef.current?.scrollTo({ top: 0 })
     // Announce the new view to assistive tech (SPA nav is otherwise silent).
@@ -309,6 +322,8 @@ export function Console({
     setLog([])
     setWidgetReady(new Set())
     setDestruct(null)
+    setDestructAborted(false)
+    setAbortStep(0)
     setError('')
   }
 
@@ -350,7 +365,8 @@ export function Console({
   // Self-destruct countdown, with a rising tick each second and a pleasant
   // all-clear chime when the sequence resolves safely (it was never real).
   useEffect(() => {
-    if (destruct == null) return undefined
+    // Aborted freezes the timer where it stood; inactive does nothing.
+    if (destruct == null || destructAborted) return undefined
     if (destruct <= 0) {
       audio.allClear()
       print(undefined, [
@@ -370,7 +386,20 @@ export function Console({
       1000,
     )
     return () => clearTimeout(t)
-  }, [destruct])
+  }, [destruct, destructAborted])
+
+  // The abort control: each click escalates the re-confirm; the final click
+  // stands the alarm down (freezes the timer, keeps the widget as "prevented").
+  function abortDestruct() {
+    if (destruct == null || destructAborted) return
+    if (abortStep < ABORT_LABELS.length - 1) {
+      setAbortStep((s) => s + 1)
+      if (soundLevel !== 'off') void audio.arm().then(() => audio.click())
+      return
+    }
+    setDestructAborted(true)
+    void audio.arm().then(() => audio.allClear())
+  }
 
   // Easter-egg view follows its own output to the bottom (terminal-style) —
   // distinct from the reading-paced auto-scroll on the content routes, which is
@@ -627,26 +656,20 @@ export function Console({
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
       setEggMode(true)
       setDestruct(DESTRUCT_FROM)
+      setDestructAborted(false)
+      setAbortStep(0)
       print(cmd, [
-        {
-          text: 'EMERGENCY DESTRUCT SEQUENCE ARMED. TYPE OVERRIDE TO ABORT.',
-          tone: 'alert',
-        },
+        { text: 'EMERGENCY DESTRUCT SEQUENCE ARMED.', tone: 'alert' },
       ])
       return true
     }
     if (cmd === 'OVERRIDE') {
       setEggMode(true)
-      if (destruct != null) {
-        setDestruct(null)
-        audio.allClear()
-        print(cmd, [
-          {
-            text: 'DESTRUCT SEQUENCE ABORTED. CREW ESSENTIAL.',
-            tone: 'caution',
-            cps: 60,
-          },
-        ])
+      // The abort control in the widget is the advertised way out; OVERRIDE
+      // stays as a hidden shortcut to the same stand-down.
+      if (destruct != null && !destructAborted) {
+        setDestructAborted(true)
+        void audio.arm().then(() => audio.allClear())
       } else {
         print(cmd, [
           { text: 'NO SEQUENCE TO OVERRIDE.', tone: 'dim', cps: 240 },
@@ -843,17 +866,30 @@ export function Console({
                     </React.Fragment>
                   ))}
                   {destruct != null ? (
-                    <Alert title="Emergency destruct">
-                      <p>
-                        THE OPTION TO OVERRIDE AUTOMATIC DESTRUCT EXPIRES IN
-                      </p>
+                    <Alert
+                      title="Emergency destruct"
+                      level={destructAborted ? 'resolved' : 'alert'}
+                    >
+                      {!destructAborted ? (
+                        <p>THE OPTION TO ABORT AUTOMATIC DESTRUCT EXPIRES IN</p>
+                      ) : null}
                       {/* aria-hidden: the per-second tick must not re-fire the
                         assertive role=alert announcement on every change. */}
                       <p className="mu-countdown" aria-hidden="true">
                         T-MINUS 00:
                         {String(Math.max(0, destruct)).padStart(2, '0')}
                       </p>
-                      <p>TYPE OVERRIDE TO ABORT.</p>
+                      {destructAborted ? (
+                        <p className="mu-destruct-done">DETONATION PREVENTED</p>
+                      ) : (
+                        <button
+                          type="button"
+                          className="mu-destruct-abort"
+                          onClick={abortDestruct}
+                        >
+                          {ABORT_LABELS[abortStep]}
+                        </button>
+                      )}
                     </Alert>
                   ) : null}
                 </div>
