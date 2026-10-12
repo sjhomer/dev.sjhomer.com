@@ -139,7 +139,10 @@ const data: Array<Mission> = [
       'Gatsby Cloud',
       'Netlify',
     ],
-    link: 'https://www.therefore.ca/case-studies/asttbc',
+    link: {
+      label: 'www.therefore.ca/case-studies/asttbc',
+      href: 'https://web.archive.org/web/20221001091233/https://www.therefore.ca/case-studies/asttbc',
+    },
   },
   {
     id: 'bitbuy',
@@ -168,7 +171,10 @@ const data: Array<Mission> = [
       'Development Lead',
       'AWS Amplify',
     ],
-    link: 'https://www.therefore.ca/case-studies/bitbuy',
+    link: {
+      label: 'www.therefore.ca/case-studies/bitbuy',
+      href: 'https://web.archive.org/web/20221001075024/https://www.therefore.ca/case-studies/bitbuy',
+    },
   },
   {
     id: 'longos',
@@ -199,7 +205,10 @@ const data: Array<Mission> = [
       'Mobile App Lead',
       'Netlify',
     ],
-    link: 'https://www.therefore.ca/case-studies/longos',
+    link: {
+      label: 'www.therefore.ca/case-studies/longos',
+      href: 'https://web.archive.org/web/20221001075024/https://www.therefore.ca/case-studies/longos',
+    },
   },
   {
     id: 'drupal-react-portals',
