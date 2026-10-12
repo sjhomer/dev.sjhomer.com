@@ -73,12 +73,36 @@ const PALETTES: Array<PaletteSpec> = [
 ]
 
 const TYPE_SPECS: Array<{ cls: string; label: string; sample: string }> = [
-  { cls: 'mu-g-t-dxl', label: 'Display XL · VT323 · 88/0.95', sample: 'MU/TH/UR' },
-  { cls: 'mu-g-t-dl', label: 'Display L · VT323 · 56/1', sample: 'SPECIAL ORDER 937' },
-  { cls: 'mu-g-t-h', label: 'Heading · VT323 · 32/1.1 · .04em', sample: 'Service Log' },
-  { cls: 'mu-g-t-body', label: 'Body · IBM Plex Mono · 16/26', sample: 'Every answer types back line by line.' },
-  { cls: 'mu-g-t-log', label: 'Log · IBM Plex Mono · 15/24', sample: 'HEAD OF ENGINEERING · 2024 → PRESENT' },
-  { cls: 'mu-g-t-label', label: 'Label · IBM Plex Mono · 12 · .12em · 500', sample: 'PALETTE · EFFECTS · VOLUME' },
+  {
+    cls: 'mu-g-t-dxl',
+    label: 'Display XL · VT323 · 88/0.95',
+    sample: 'MU/TH/UR',
+  },
+  {
+    cls: 'mu-g-t-dl',
+    label: 'Display L · VT323 · 56/1',
+    sample: 'SPECIAL ORDER 937',
+  },
+  {
+    cls: 'mu-g-t-h',
+    label: 'Heading · VT323 · 32/1.1 · .04em',
+    sample: 'Service Log',
+  },
+  {
+    cls: 'mu-g-t-body',
+    label: 'Body · IBM Plex Mono · 16/26',
+    sample: 'Every answer types back line by line.',
+  },
+  {
+    cls: 'mu-g-t-log',
+    label: 'Log · IBM Plex Mono · 15/24',
+    sample: 'HEAD OF ENGINEERING · 2024 → PRESENT',
+  },
+  {
+    cls: 'mu-g-t-label',
+    label: 'Label · IBM Plex Mono · 12 · .12em · 500',
+    sample: 'PALETTE · EFFECTS · VOLUME',
+  },
 ]
 
 const SPACES: Array<[string, number]> = [
@@ -225,8 +249,8 @@ export function GuideSection(): React.ReactElement {
         </ul>
         <p className="mu-g-lead">
           Content types in line by line on the terminal and the reading pages;
-          it is instant here on the manual, and instant everywhere under
-          reduced motion.
+          it is instant here on the manual, and instant everywhere under reduced
+          motion.
         </p>
       </section>
 
@@ -240,8 +264,7 @@ export function GuideSection(): React.ReactElement {
           <div className="mu-g-cell">
             <div className="mu-g-cell-demo">
               <Tag>normal</Tag> <Tag tone="caution">caution</Tag>{' '}
-              <Tag tone="alert">alert</Tag>{' '}
-              <Tag variant="outline">outline</Tag>
+              <Tag tone="alert">alert</Tag> <Tag variant="outline">outline</Tag>
             </div>
             <span className="mu-g-cell-name">Tag</span>
           </div>
@@ -314,11 +337,12 @@ export function GuideSection(): React.ReactElement {
         <ul className="mu-g-list">
           <li>
             One sprite of synthesised tones: boot drone, key clicks, the danger
-            klaxon, the all-clear, and the self-destruct tick that rises in pitch.
+            klaxon, the all-clear, and the self-destruct tick that rises in
+            pitch.
           </li>
           <li>
-            Two levels — <code>off</code> / <code>on</code> (gentle at 0.35) — set
-            by the <strong>Vol.</strong> knob and remembered across visits.
+            Two levels — <code>off</code> / <code>on</code> (gentle at 0.35) —
+            set by the <strong>Vol.</strong> knob and remembered across visits.
           </li>
           <li>
             Audio needs a gesture, so a gate asks once on boot; it never plays
@@ -335,17 +359,17 @@ export function GuideSection(): React.ReactElement {
         />
         <ul className="mu-g-list">
           <li>
-            <strong>Content-model-driven.</strong> One typed, Zod-validated source
-            (<code>src/content</code>) feeds the terminal, the printable{' '}
+            <strong>Content-model-driven.</strong> One typed, Zod-validated
+            source (<code>src/content</code>) feeds the terminal, the printable{' '}
             <Link className="mu-link" to="/cv">
               /cv
             </Link>
             , JSON-LD and the generated PDF/OG images.
           </li>
           <li>
-            <strong>Progressive enhancement.</strong> Every page renders complete
-            on the server and works with no JavaScript; typing, audio and the
-            knobs enhance on the client.
+            <strong>Progressive enhancement.</strong> Every page renders
+            complete on the server and works with no JavaScript; typing, audio
+            and the knobs enhance on the client.
           </li>
           <li>
             <strong>Accessibility first.</strong> Colour never carries meaning
@@ -354,10 +378,10 @@ export function GuideSection(): React.ReactElement {
           </li>
           <li>
             <strong>Evolved from the concept.</strong> The three palettes, the
-            token names and most component contracts survived. The planned
-            "Ask MOTHER" LLM was re-scoped to grounded, canned answers; the
-            terminal engine was hand-rolled rather than taken from the bundle;
-            and the header gained the analog <strong>knobs</strong>.
+            token names and most component contracts survived. The planned "Ask
+            MOTHER" LLM was re-scoped to grounded, canned answers; the terminal
+            engine was hand-rolled rather than taken from the bundle; and the
+            header gained the analog <strong>knobs</strong>.
           </li>
         </ul>
       </section>

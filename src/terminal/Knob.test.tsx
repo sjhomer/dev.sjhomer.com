@@ -49,9 +49,7 @@ describe('Knob', () => {
           onClick={() => {}}
         />,
       )
-      return container
-        .querySelector('.mu-knob-pointer')!
-        .getAttribute('style')
+      return container.querySelector('.mu-knob-pointer')!.getAttribute('style')
     }
     expect(rot(3, 0)).toContain('rotate(-50deg)') // first → left
     expect(rot(3, 1)).toContain('rotate(0deg)') // middle → up

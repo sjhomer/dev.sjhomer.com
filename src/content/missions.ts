@@ -50,7 +50,10 @@ const data: Array<Mission> = [
     ],
     services: ['Technical Strategy Lead', 'Development Lead'],
     links: [
-      { label: 'battlefy.com/nintendovs', href: 'https://battlefy.com/nintendovs' },
+      {
+        label: 'battlefy.com/nintendovs',
+        href: 'https://battlefy.com/nintendovs',
+      },
       {
         label: 'battlefy.com/battlefield',
         href: 'https://battlefy.com/battlefield',

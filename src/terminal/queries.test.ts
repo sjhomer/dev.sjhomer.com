@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  PAGE_ORDER,
-  complete,
-  pageNav,
-  resolvePath,
-  suggest,
-} from './queries'
+import { PAGE_ORDER, complete, pageNav, resolvePath, suggest } from './queries'
 
 describe('suggest (visible command menu)', () => {
   it('omits CV, ASK, DOWNLOAD and the per-employer LOG filters', () => {

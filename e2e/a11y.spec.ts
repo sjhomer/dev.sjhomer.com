@@ -41,7 +41,9 @@ test('the CV route shows only a back button, no console controls', async ({
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'hardcopy')
 
   await expect(page.getByRole('button', { name: /^Theme:/ })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /^CRT effects/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^CRT effects/ })).toHaveCount(
+    0,
+  )
   await expect(page.getByRole('button', { name: /^Volume / })).toHaveCount(0)
 
   const back = page.getByRole('button', { name: /BACK TO TRANSMIT/i })
