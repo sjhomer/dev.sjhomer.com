@@ -48,7 +48,9 @@ function BootBar({
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [])
-  return <ProgressBar label={label} value={v} />
+  // A shorter bar (14 cells, not the default 20) so the labelled checks don't
+  // run the full width of the screen — especially tight on phones.
+  return <ProgressBar label={label} value={v} cells={14} />
 }
 ;(BootBar as unknown as { __staged?: boolean }).__staged = true
 

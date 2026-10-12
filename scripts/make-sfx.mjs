@@ -161,6 +161,40 @@ function allClear() {
   return out
 }
 
+/**
+ * Danger klaxon — an ominous alarm for the SPECIAL ORDER 937 reveal, playing
+ * from the moment "CREW EXPENDABLE." starts typing and through the cursor hang.
+ * A low tritone pair (the classic dread interval) alternates slowly and drifts
+ * downward over a detuned sub-bass drone that beats against itself; the whole
+ * cue swells in so it creeps up on you. All original synthesis — no sampled
+ * source. ~2.4 s, enough to carry the type-in plus most of the hold.
+ */
+function warning() {
+  const dur = 2.4
+  const n = ms(dur * 1000)
+  const out = new Float32Array(n)
+  const a = 185.0 // ~F#3
+  const b = 261.63 // C4  (a→b ≈ a tritone: the "ominous" interval)
+  const period = 0.34 // slow, menacing alternation
+  for (let i = 0; i < n; i++) {
+    const t = i / SR
+    const onA = Math.floor(t / period) % 2 === 0
+    const drift = 1 - 0.05 * (t / dur) // sags downward across the cue
+    const f = (onA ? a : b) * drift
+    const tone = square(2 * Math.PI * f * t) * 0.5
+    const seg = (t % period) / period
+    const throb = 0.3 + 0.7 * Math.sin(Math.PI * seg) // pulses, never fully silent
+    // Detuned sub-bass: two close frequencies beat ~3 Hz for an uneasy throb.
+    const drone =
+      Math.sin(2 * Math.PI * 55 * t) * 0.3 +
+      Math.sin(2 * Math.PI * 58.3 * t) * 0.3
+    const swell = Math.min(1, t / 0.5) // creeps in rather than snapping on
+    const fade = Math.min(1, t / 0.04) * Math.min(1, (dur - t) / 0.2)
+    out[i] = (tone * throb * swell + drone * 0.6) * 0.6 * fade
+  }
+  return out
+}
+
 /** Normalise to a safe peak so nothing clips after summing. */
 function normalise(buf, peak = 0.92) {
   let max = 0
@@ -221,6 +255,7 @@ const { buf, sprite } = pack([
   { name: 'key3', samples: keyBeep(0x3333, 1650) },
   { name: 'countdown', samples: countdownTick() },
   { name: 'allclear', samples: allClear() },
+  { name: 'warning', samples: warning() },
 ])
 
 await mkdir(resolve(root, 'public/audio'), { recursive: true })

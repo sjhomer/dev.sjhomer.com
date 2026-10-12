@@ -117,87 +117,108 @@ export function ServiceLogSection({
     </a>
   )
 
-  return (
-    <Staged className="mu-section">
-      <Typewriter as="h1" variant="display" text="SERVICE LOG" />
-      <Typewriter
-        text={
-          key
-            ? `FILTER: ${key}`
-            : `2005 → PRESENT · ${roles.length} RECORDS ACROSS ${employers.length} POSTINGS`
-        }
-        tone="dim"
-        cps={240}
-      />
-      <nav className="mu-emp-tabs" aria-label="Filter by employer">
-        {tab('', 'ALL', !key)}
-        {employers.map((e) =>
-          tab(e.key, e.key, Boolean(key) && e.key.startsWith(key)),
-        )}
-      </nav>
+  const subtitle = key
+    ? `FILTER: ${key}`
+    : `2005 → PRESENT · ${roles.length} RECORDS ACROSS ${employers.length} POSTINGS`
 
-      {shown.length ? (
-        shown.map((e) => {
-          const oldest = e.roles[e.roles.length - 1]
-          const newest = e.roles[0]
-          const span = `${monthYear(oldest.start)} → ${newest.end ? monthYear(newest.end) : 'PRESENT'}`
-          return (
-            <Staged key={e.key} className="mu-employer">
-              <header className="mu-employer-head">
-                <h3 className="mu-employer-name">{e.company}</h3>
-                <p className="mu-employer-meta">
-                  {span}
-                  {e.location ? ` · ${e.location}` : ''}
-                  {newest.remote ? ' · REMOTE' : ''}
-                </p>
-              </header>
-              {e.roles.map((r) => (
-                <article key={r.id} className="mu-pos">
-                  <div className="mu-pos-head">
-                    <h4 className="mu-pos-title">{r.title}</h4>
-                    <span className="mu-pos-dates">
-                      {monthYear(r.start)} –{' '}
-                      {r.end ? monthYear(r.end) : 'Present'}
-                    </span>
-                    <Tag
-                      tone={
-                        r.clearance === 'COMMAND'
-                          ? 'caution'
-                          : r.clearance === 'ARCHIVED'
-                            ? 'dim'
-                            : 'normal'
-                      }
-                    >
-                      {r.clearance}
-                    </Tag>
-                  </div>
-                  <ul className="mu-log-list">
-                    {r.highlights.map((h, i) => (
-                      <li key={i} className="mu-log-item">
-                        {h.metric ? (
-                          <span className="mu-log-metric">{h.metric}</span>
-                        ) : (
-                          <span className="mu-log-bullet" aria-hidden="true">
-                            ■
-                          </span>
-                        )}
-                        <span>{h.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </Staged>
-          )
-        })
-      ) : (
-        <Typewriter
-          text={`NO RECORD FOR "${key}". TRY LOG BATTLEFY, LOG THEREFORE, LOG RC OR LOG STEELSERIES.`}
-          tone="alert"
-        />
-      )}
-      <Divider label="End of file" />
-    </Staged>
+  return (
+    <div className="mu-section">
+      {/* The header animates once and then stays put: it is NOT re-keyed by the
+          filter, so switching filters updates the subtitle text and the active
+          tab in place rather than rebuilding (which was jarring). The subtitle
+          is a plain line (not typed) so a filter change swaps it silently. On
+          desktop the subtitle + filters sit right of the title. */}
+      <Staged className="mu-log-head">
+        <Typewriter as="h1" variant="display" text="SERVICE LOG" />
+        <div className="mu-log-head-aside">
+          <p className="mu-type mu-tone-dim">{subtitle}</p>
+          <nav className="mu-emp-tabs" aria-label="Filter by employer">
+            {tab('', 'ALL', !key)}
+            {employers.map((e) =>
+              tab(e.key, e.key, Boolean(key) && e.key.startsWith(key)),
+            )}
+          </nav>
+        </div>
+      </Staged>
+
+      {/* Only the records re-run on a filter change (runKey = the filter), so
+          the typing restarts for the new view while the header holds steady. */}
+      <Staged className="mu-log-records" runKey={key || 'all'}>
+        {shown.length ? (
+          shown.map((e) => {
+            const oldest = e.roles[e.roles.length - 1]
+            const newest = e.roles[0]
+            const span = `${monthYear(oldest.start)} → ${newest.end ? monthYear(newest.end) : 'PRESENT'}`
+            return (
+              <Staged key={e.key} className="mu-employer">
+                {/* Every heading is its own staged step too — so the record
+                    truly prints one line at a time (company, then its dates,
+                    then the first role's title, then each highlight …) instead
+                    of the headings appearing in a burst ahead of the lines.
+                    Each nested Staged starts fully shown, so SSR / no-JS still
+                    get the whole record. */}
+                <Staged className="mu-employer-head">
+                  <Typewriter
+                    as="h3"
+                    className="mu-employer-name"
+                    text={e.company}
+                  />
+                  <Typewriter
+                    className="mu-employer-meta"
+                    tone="dim"
+                    cps={240}
+                    text={`${span}${e.location ? ` · ${e.location}` : ''}${
+                      newest.remote ? ' · REMOTE' : ''
+                    }`}
+                  />
+                </Staged>
+                {e.roles.map((r) => (
+                  <Staged key={r.id} className="mu-pos">
+                    <Staged className="mu-pos-head">
+                      <Typewriter
+                        as="h4"
+                        className="mu-pos-title"
+                        text={r.title}
+                      />
+                      <span className="mu-pos-dates">
+                        {monthYear(r.start)} –{' '}
+                        {r.end ? monthYear(r.end) : 'Present'}
+                      </span>
+                      <Tag
+                        tone={
+                          r.clearance === 'COMMAND'
+                            ? 'caution'
+                            : r.clearance === 'ARCHIVED'
+                              ? 'dim'
+                              : 'normal'
+                        }
+                      >
+                        {r.clearance}
+                      </Tag>
+                    </Staged>
+                    <Staged className="mu-log-list">
+                      {r.highlights.map((h, i) => (
+                        <Typewriter
+                          key={i}
+                          text={`${h.metric ?? '■'} ${h.text}`}
+                          cps={400}
+                        />
+                      ))}
+                    </Staged>
+                  </Staged>
+                ))}
+              </Staged>
+            )
+          })
+        ) : (
+          <Typewriter
+            text={`NO RECORD FOR "${key}". TRY LOG BATTLEFY, LOG THEREFORE, LOG RC OR LOG STEELSERIES.`}
+            tone="alert"
+          />
+        )}
+        <Divider label="End of file" />
+      </Staged>
+    </div>
   )
 }
 
@@ -272,33 +293,28 @@ export function QuartersSection(): React.ReactElement {
       <TypeSequence
         lines={personal.items.map((text) => ({ text: '■ ' + text }))}
       />
-      {personal.creative.length ? (
-        <>
-          <Divider label="Creative works" />
-          {personal.creative.map((c) => (
-            <section
-              key={c.title}
-              className="mu-log"
-              style={{ borderTopStyle: 'dashed' }}
-            >
-              <h3 className="mu-log-title">{c.title}</h3>
-              <p className="mu-type">{c.description}</p>
-              {c.link ? (
-                <p className="mu-type">
-                  <a
-                    className="mu-link"
-                    href={c.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {c.link.replace(/^https?:\/\//, '')}
-                  </a>
-                </p>
-              ) : null}
-            </section>
-          ))}
-        </>
-      ) : null}
+      {personal.creative.length ? <Divider label="Creative works" /> : null}
+      {personal.creative.map((c) => (
+        // A nested Staged per work (like the missions) so the block reveals in
+        // sequence and its description types in through the line renderer,
+        // rather than appearing all at once as static text.
+        <Staged key={c.title} className="mu-log">
+          <Typewriter as="h3" className="mu-log-title" text={c.title} />
+          <Typewriter text={c.description} />
+          {c.link ? (
+            <p className="mu-type">
+              <a
+                className="mu-link"
+                href={c.link}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {c.link.replace(/^https?:\/\//, '')}
+              </a>
+            </p>
+          ) : null}
+        </Staged>
+      ))}
     </Staged>
   )
 }

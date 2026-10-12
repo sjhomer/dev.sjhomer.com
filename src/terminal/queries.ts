@@ -83,6 +83,8 @@ export const BUILTINS = [
   'ROLL',
   'OVERRIDE',
   'DOWNLOAD',
+  'DEBUG',
+  'SOUND BOARD',
 ] as const
 
 /** Everything a Tab/visible auto-complete can offer, uppercase. */
@@ -133,32 +135,22 @@ export function resolvePath(raw: string): string | undefined {
 export interface Suggestion {
   name: string
   hint: string
-  group: 'query' | 'log' | 'command' | 'easter'
+  group: 'query' | 'command' | 'easter'
 }
-
-/** Service-log sub-queries, one per employer. */
-const EMPLOYERS: Array<{ key: string; label: string }> = [
-  { key: 'BATTLEFY', label: 'Battlefy' },
-  { key: 'THEREFORE', label: 'Therefore Interactive' },
-  { key: 'RC', label: 'RC Design' },
-  { key: 'STEELSERIES', label: 'SteelSeries' },
-]
 
 /**
  * Every command the visible auto-complete offers, grouped for discovery.
  * CV, ASK and DOWNLOAD are intentionally left out of the visible list (CV is
  * off-menu; ASK/DOWNLOAD stay runnable by typing) to keep the menu focused.
+ * The per-employer `LOG <X>` filters are deliberately absent too — the Service
+ * Log page carries its own employer tabs, so listing them here was redundant
+ * clutter; typing `LOG BATTLEFY` et al. still routes (see Console.run()).
  */
 const SUGGESTABLE: Array<Suggestion> = [
   ...QUERIES.filter((q) => !q.offMenu).map((q) => ({
     name: q.name,
     hint: q.hint,
     group: 'query' as const,
-  })),
-  ...EMPLOYERS.map((e) => ({
-    name: `LOG ${e.key}`,
-    hint: `service log — ${e.label}`,
-    group: 'log' as const,
   })),
   {
     name: 'SPECIAL ORDER 937',
@@ -172,6 +164,8 @@ const SUGGESTABLE: Array<Suggestion> = [
     hint: 'emergency destruct',
     group: 'easter',
   },
+  { name: 'DEBUG', hint: 'run diagnostics', group: 'easter' },
+  { name: 'SOUND BOARD', hint: 'play the sound bits', group: 'easter' },
 ]
 
 function aliasesFor(name: string): Array<string> {

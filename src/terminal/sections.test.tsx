@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import {
   DossierSection,
   MissionsSection,
+  QuartersSection,
   ServiceLogSection,
   TransmitSection,
 } from './sections'
@@ -21,9 +22,12 @@ describe('terminal sections', () => {
     expect(
       screen.getAllByText(/Cultivated a high-performance/).length,
     ).toBeGreaterThan(0)
+    // The highlights now stream through Typewriter, whose dual sr/aria-hidden
+    // spans mean a single-occurrence highlight appears exactly twice in the DOM
+    // (so this still guards against the wording duplicating across records).
     expect(
       screen.getAllByText(/componentization of various marketing sites/).length,
-    ).toBe(1)
+    ).toBe(2)
   })
 
   it('Missions surfaces the real case studies', () => {
@@ -32,6 +36,25 @@ describe('terminal sections', () => {
     expect(
       screen.getAllByText(/Trudel Medical International/).length,
     ).toBeGreaterThan(0)
+  })
+
+  it('Quarters renders Creative Works through the line renderer', () => {
+    render(<QuartersSection />)
+    expect(
+      screen.getByRole('heading', { name: /Homer on Olympus/ }),
+    ).toBeInTheDocument()
+    // Both the title AND the description go through Typewriter, whose signature
+    // is the text appearing in the sr span and the aria-hidden span (two
+    // matches), rather than a plain <h3>/<p> that would render it once. This
+    // holds for every creative work, not just the first.
+    for (const text of [
+      /Homer on Olympus/,
+      /A fun audio drama which I wrote/,
+      /Evergrowth Mastermind/,
+      /A leadership and personal development mastermind/,
+    ]) {
+      expect(screen.getAllByText(text)).toHaveLength(2)
+    }
   })
 
   it('Transmit exposes LinkedIn + GitHub only', () => {

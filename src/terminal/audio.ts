@@ -88,6 +88,8 @@ export interface AudioManager {
   countdown: (rise: number) => void
   /** Play the pleasant all-clear chime if armed + audible (safe resolution). */
   allClear: () => void
+  /** Play the tense danger klaxon if armed + audible (the 937 "expendable" beat). */
+  warning: () => void
 }
 
 export function createAudioManager(deps: AudioDeps): AudioManager {
@@ -159,6 +161,11 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
     allClear() {
       if (!player || level === 'off') return
       const id = player.play('allclear')
+      player.volume(levelToVolume(level), id)
+    },
+    warning() {
+      if (!player || level === 'off') return
+      const id = player.play('warning')
       player.volume(levelToVolume(level), id)
     },
   }

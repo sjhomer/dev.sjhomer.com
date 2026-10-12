@@ -1,12 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { PAGE_ORDER, pageNav, suggest } from './queries'
+import { PAGE_ORDER, complete, pageNav, suggest } from './queries'
 
 describe('suggest (visible command menu)', () => {
-  it('omits CV, ASK and DOWNLOAD from the list', () => {
+  it('omits CV, ASK, DOWNLOAD and the per-employer LOG filters', () => {
     const names = suggest('').map((s) => s.name)
     expect(names).not.toContain('CV')
     expect(names).not.toContain('ASK')
     expect(names).not.toContain('DOWNLOAD')
+    // The Service Log page carries its own employer tabs, so the LOG shortcuts
+    // were dropped from the palette (typing `LOG BATTLEFY` still routes).
+    expect(names.some((n) => n.startsWith('LOG '))).toBe(false)
+  })
+
+  it('surfaces the DEBUG and SOUND BOARD eggs for discovery', () => {
+    const names = suggest('').map((s) => s.name)
+    expect(names).toContain('DEBUG')
+    expect(names).toContain('SOUND BOARD')
+    // ...and they complete from a prefix (so Tab works in the prompt).
+    expect(complete('DEBUG')).toBe('DEBUG')
+    expect(complete('SOUND')).toBe('SOUND BOARD')
   })
 
   it('still lists the six primary queries', () => {

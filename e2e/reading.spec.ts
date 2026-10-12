@@ -60,3 +60,24 @@ test('navigating to a new page restarts auto-scroll', async ({ page }) => {
   // Fresh page → auto-scroll is active again.
   await expect(page.getByText('AUTO-READ')).toBeVisible({ timeout: 8000 })
 })
+
+test('changing a filter restarts auto-scroll (the view re-animates)', async ({
+  page,
+}) => {
+  await page.goto('/log')
+  const out = page.locator('#mu-main')
+  // Pause auto-read on the unfiltered log.
+  await expect(page.getByText('AUTO-READ')).toBeVisible({ timeout: 8000 })
+  await out.dispatchEvent('wheel', { deltaY: 60 })
+  await expect(page.getByText('AUTO-READ')).toBeHidden()
+
+  // Changing the filter (same route, new ?f=) re-runs the typing, so auto-read
+  // should treat it as a fresh view and start again.
+  await page.getByRole('link', { name: 'BATTLEFY', exact: true }).click()
+  await expect(page).toHaveURL(/f=BATTLEFY/)
+  await expect(page.getByText('AUTO-READ')).toBeVisible({ timeout: 8000 })
+
+  // A genuine scroll after it restarts still pauses it (backstop intact).
+  await out.dispatchEvent('wheel', { deltaY: 60 })
+  await expect(page.getByText('AUTO-READ')).toBeHidden()
+})

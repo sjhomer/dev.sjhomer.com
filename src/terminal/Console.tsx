@@ -10,12 +10,40 @@ import {
 } from '../components/muthur'
 import type { Line } from '../components/muthur'
 import { MENU, complete, pageNav, resolvePath, suggest } from './queries'
-import { askLines, jonesyLines, rollLines, specialOrderLines } from './eggs'
+import type { Suggestion } from './queries'
+import {
+  askLines,
+  debugLines,
+  jonesyLines,
+  rollDice,
+  rollLines,
+  specialOrderLines,
+} from './eggs'
 import { audio, autoplayLikely, nextLevel } from './audio'
 import type { SoundLevel } from './audio'
 import { useAutoScroll } from './useAutoScroll'
+import { SoundBoard } from './SoundBoard'
 import { SoundGate } from './SoundGate'
 import './console.css'
+
+/**
+ * The six easter-egg controls that replace the numbered query menu on desktop
+ * once any egg is active, so the console turns into a little playground. Each
+ * runs its command; `label`/`hint` are display only (note "Ask MOTHER" fronts
+ * the self-destruct). Keep this at six to mirror the 1–6 menu it stands in for.
+ */
+const EGG_CONTROLS: Array<{ cmd: string; label: string; hint: string }> = [
+  { cmd: 'SPECIAL ORDER 937', label: 'Special order 937', hint: 'eyes only' },
+  {
+    cmd: "WHAT'S THE STORY MOTHER",
+    label: 'Ask MOTHER',
+    hint: "what's the story?",
+  },
+  { cmd: 'DEBUG', label: 'Debug', hint: 'run diagnostics' },
+  { cmd: 'JONESY', label: 'Jonesy', hint: "the ship's cat" },
+  { cmd: 'SOUND BOARD', label: 'Sound board', hint: 'play the bits' },
+  { cmd: 'ROLL D20', label: 'Roll D20', hint: 'roll the dice' },
+]
 
 const PALETTES = ['mother', 'sevastopol', 'hardcopy'] as const
 /** Self-destruct starts here; the countdown tick rises in pitch toward zero. */
@@ -30,6 +58,8 @@ interface Block {
   id: number
   echo?: string
   lines: Array<Line>
+  /** An interactive widget rendered after the lines (SOUND BOARD egg). */
+  widget?: 'soundboard'
 }
 
 function store(key: string, value?: string): string | null {
@@ -73,6 +103,33 @@ function ShipClock(): React.ReactElement {
   )
 }
 
+/** One row in the command palette. `data-group` drives the per-group styling. */
+function SuggestItem({
+  suggestion,
+  onPick,
+}: {
+  suggestion: Suggestion
+  onPick: (name: string) => void
+}): React.ReactElement {
+  return (
+    <li>
+      <button
+        type="button"
+        className="mu-suggest-item"
+        data-group={suggestion.group}
+        // preventDefault on mousedown keeps the input focused (so the panel
+        // doesn't close before activation); onClick fires for both pointer and
+        // keyboard (Enter/Space), so the item is keyboard-operable.
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onPick(suggestion.name)}
+      >
+        <span className="mu-suggest-name">{suggestion.name}</span>
+        <span className="mu-suggest-hint">{suggestion.hint}</span>
+      </button>
+    </li>
+  )
+}
+
 export function Console({
   children,
 }: {
@@ -80,6 +137,12 @@ export function Console({
 }): React.ReactElement {
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  // The search too, so changing a page's filter (e.g. /log?f=…, which re-runs
+  // the typing animations) counts as a fresh view for auto-read. Serialized to
+  // a stable string so the selector returns a primitive (no re-render churn).
+  const searchStr = useRouterState({
+    select: (s) => JSON.stringify(s.location.search),
+  })
   const isHardcopy = pathname === '/cv'
 
   const [value, setValue] = useState('')
@@ -100,6 +163,13 @@ export function Console({
   const [eggMode, setEggMode] = useState(false)
   const [moreUp, setMoreUp] = useState(false)
   const [moreDown, setMoreDown] = useState(false)
+  // Egg blocks whose typed lines have finished printing, so a trailing widget
+  // (the SOUND BOARD pad grid) holds off until its title has typed out.
+  const [widgetReady, setWidgetReady] = useState<ReadonlySet<number>>(
+    () => new Set(),
+  )
+  const markWidgetReady = (id: number) =>
+    setWidgetReady((s) => (s.has(id) ? s : new Set(s).add(id)))
 
   const nextId = useRef(1)
   const firstRoute = useRef(true)
@@ -107,6 +177,28 @@ export function Console({
   const histPos = useRef(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const outRef = useRef<HTMLDivElement>(null)
+  // Live mirrors for the once-bound global key handler (which must not re-bind
+  // every render — that would reset the Konami progress each keystroke).
+  const eggModeRef = useRef(eggMode)
+  eggModeRef.current = eggMode
+  const runRef = useRef<(raw: string) => boolean>(() => false)
+
+  // Reveal the output once the client has mounted and the sections have
+  // collapsed to begin their typing (see the pre-animation gate in styles.css).
+  // Deferred two frames so the collapse has painted first — otherwise the full
+  // server-rendered content would flash the instant it un-hides.
+  useEffect(() => {
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        document.documentElement.classList.add('mu-ready')
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
+  }, [])
 
   // Apply saved palette / effects imperatively (outside React, no hydration clash).
   useEffect(() => {
@@ -170,6 +262,7 @@ export function Console({
   useEffect(() => {
     setEggMode(false)
     setLog([])
+    setWidgetReady(new Set())
     setDestruct(null)
     setPickerOpen(false)
     outRef.current?.scrollTo({ top: 0 })
@@ -189,6 +282,7 @@ export function Console({
   function resetTerminal() {
     setEggMode(false)
     setLog([])
+    setWidgetReady(new Set())
     setDestruct(null)
     setError('')
   }
@@ -240,7 +334,6 @@ export function Console({
           tone: 'caution',
           cps: 60,
         },
-        { text: 'TYPE DOSSIER TO CONTINUE.', tone: 'dim', cps: 240 },
       ])
       setDestruct(null)
       return undefined
@@ -254,20 +347,50 @@ export function Console({
     return () => clearTimeout(t)
   }, [destruct])
 
-  // Easter-egg view follows its own output to the bottom as blocks and the
-  // destruct box append (terminal-style) — distinct from the reading-paced
-  // auto-scroll on the content routes, which is suppressed in egg mode.
+  // Easter-egg view follows its own output to the bottom (terminal-style) —
+  // distinct from the reading-paced auto-scroll on the content routes, which is
+  // suppressed in egg mode. Unlike the fold-cue observer above, this one DOES
+  // watch characterData: egg lines type in character by character (no block
+  // mounts, so `log`/`destruct` don't change), and the view must keep that
+  // actively-typing line in sight as it grows and wraps. rAF-throttled, so the
+  // layout read happens at most once per frame, not once per character.
   useEffect(() => {
-    if (!eggMode) return
+    if (!eggMode) return undefined
     const el = outRef.current
-    if (el) el.scrollTo({ top: el.scrollHeight })
-  }, [eggMode, log, destruct])
+    if (!el) return undefined
+    let scheduled = false
+    const toBottom = () => el.scrollTo({ top: el.scrollHeight })
+    const schedule = () => {
+      if (scheduled) return
+      scheduled = true
+      requestAnimationFrame(() => {
+        scheduled = false
+        toBottom()
+      })
+    }
+    toBottom()
+    const obs = new MutationObserver(schedule)
+    obs.observe(el, { childList: true, subtree: true, characterData: true })
+    return () => obs.disconnect()
+  }, [eggMode])
+
+  // Reset the scroll to the top when the view changes — not just on a route
+  // change (handled above) but also when a page's filter changes (same route,
+  // new ?search), which re-runs the typing. Declared before useAutoScroll so it
+  // runs first on commit: a view that starts at the top means auto-read's scroll
+  // backstop won't mistake the old offset being clamped for a user scroll.
+  useEffect(() => {
+    outRef.current?.scrollTo({ top: 0 })
+  }, [pathname, searchStr])
 
   // Reading-paced auto-scroll on the content routes (not eggs, not the printable
-  // /cv). It restarts per page and pauses for good on the first user scroll.
+  // /cv). It restarts per view (route or filter) and pauses on the first scroll.
+  // The service log prints strictly line by line, so give it a longer lead-in
+  // (4s) before auto-read starts — on first load and on every filter change.
   const autoScrolling = useAutoScroll(outRef, {
     active: !eggMode && !isHardcopy,
-    resetKey: pathname,
+    resetKey: pathname + searchStr,
+    startDelayMs: pathname === '/log' ? 4000 : undefined,
   })
 
   // Konami → Sevastopol; number keys select; Escape returns home.
@@ -309,10 +432,17 @@ export function Console({
       }
       const inPrompt = document.activeElement === inputRef.current
       if (!inPrompt && /^[1-6]$/.test(e.key)) {
-        const q = MENU[Number(e.key) - 1]
-        if (q.path) {
+        // In egg mode the 1–6 keys drive the egg controls that now stand in for
+        // the numbered menu; otherwise they select the matching query page.
+        if (eggModeRef.current) {
           e.preventDefault()
-          navigate({ to: q.path })
+          runRef.current(EGG_CONTROLS[Number(e.key) - 1].cmd)
+        } else {
+          const q = MENU[Number(e.key) - 1]
+          if (q.path) {
+            e.preventDefault()
+            navigate({ to: q.path })
+          }
         }
       }
       if (!inPrompt && e.key === 'Escape') navigate({ to: '/' })
@@ -377,8 +507,14 @@ export function Console({
     if (lvl !== 'off') void audio.arm().then(() => audio.click()) // audible feedback
   }
 
-  function print(echo: string | undefined, lines: Array<Line>) {
-    setLog((b) => b.concat([{ id: nextId.current++, echo, lines }]).slice(-16))
+  function print(
+    echo: string | undefined,
+    lines: Array<Line>,
+    widget?: Block['widget'],
+  ) {
+    setLog((b) =>
+      b.concat([{ id: nextId.current++, echo, lines, widget }]).slice(-16),
+    )
   }
 
   /** Runs a command. Returns true when recognised (valid), false otherwise. */
@@ -420,7 +556,15 @@ export function Console({
     }
     if (cmd.startsWith('ROLL')) {
       setEggMode(true)
-      print(cmd, rollLines(cmd.slice(4).trim()))
+      const roll = rollDice(cmd.slice(4).trim())
+      // The reveal is near-instant (fast cps), so cue the sting now: a natural
+      // 20 gets the pleasant all-clear, a natural 1 trips the danger klaxon.
+      if (roll.sides === 20 && roll.value === 20) {
+        void audio.arm().then(() => audio.allClear())
+      } else if (roll.sides === 20 && roll.value === 1) {
+        void audio.arm().then(() => audio.warning())
+      }
+      print(cmd, rollLines(roll))
       return true
     }
     if (cmd.startsWith('ASK')) {
@@ -431,6 +575,24 @@ export function Console({
     if (cmd === 'SPECIAL ORDER 937') {
       setEggMode(true)
       print(cmd, specialOrderLines())
+      return true
+    }
+    if (cmd === 'DEBUG') {
+      setEggMode(true)
+      print(cmd, debugLines())
+      return true
+    }
+    if (cmd === 'SOUND BOARD' || cmd === 'SOUNDBOARD') {
+      setEggMode(true)
+      print(
+        cmd,
+        [
+          // A display title like the other eggs (DEBUG, 937), then the dim hint.
+          { text: 'SOUND BOARD', variant: 'display', cps: 30 },
+          { text: 'TAP A CELL TO PLAY.', tone: 'dim', cps: 240 },
+        ],
+        'soundboard',
+      )
       return true
     }
     if (cmd === "WHAT'S THE STORY MOTHER" || cmd === 'WHATS THE STORY MOTHER') {
@@ -467,6 +629,8 @@ export function Console({
     setError(`UNABLE TO COMPUTE. QUERY "${cmd}" NOT RECOGNISED.`)
     return false
   }
+  // Keep the global key handler's view of run() current without re-binding it.
+  runRef.current = run
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'ArrowUp' && hist.current.length) {
@@ -490,6 +654,14 @@ export function Console({
   // the mobile picker button has been tapped (mobile has no text input).
   const suggestions =
     focused || value.trim() || pickerOpen ? suggest(value) : []
+  // Run a picked suggestion, then clear and close the palette. Shared by both
+  // suggestion groups (commands + the restricted easter eggs).
+  const pickSuggestion = (name: string) => {
+    run(name)
+    setValue('')
+    setPickerOpen(false)
+    inputRef.current?.blur()
+  }
   // Mobile pager targets (the numbered menu is hidden on phones). Landing sits
   // before the first page: prev → Transmit, next → Dossier.
   const pager = pageNav(pathname)
@@ -564,20 +736,47 @@ export function Console({
           >
             {eggMode ? (
               <div className="mu-egg">
-                <button
-                  type="button"
-                  className="mu-reset"
-                  onClick={resetTerminal}
-                >
-                  ↺ Reset terminal
-                </button>
-                {log.map((b) => (
-                  <div key={b.id} className="mu-console-block">
-                    {b.echo ? (
-                      <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
+                <div className="mu-egg-bar">
+                  <button
+                    type="button"
+                    className="mu-reset"
+                    onClick={resetTerminal}
+                  >
+                    ↺ Reset terminal
+                  </button>
+                  <p className="mu-egg-warn">
+                    <span className="mu-egg-warn-dot" aria-hidden="true" />
+                    Unauthorised subsystem — you have strayed from the crew
+                    interface into restricted diagnostics. MOTHER sees this, and
+                    MOTHER does not care for the curious.
+                  </p>
+                </div>
+                {log.map((b, i) => (
+                  <React.Fragment key={b.id}>
+                    {/* A rule only between distinct eggs — i.e. before a block
+                        that echoes a new command. Continuation blocks printed by
+                        the same egg (no echo, e.g. the destruct DETONATION
+                        follow-up) stay attached to it. */}
+                    {i > 0 && b.echo ? (
+                      <hr className="mu-egg-rule" aria-hidden="true" />
                     ) : null}
-                    <TypeSequence lines={b.lines} />
-                  </div>
+                    <div className="mu-console-block">
+                      {b.echo ? (
+                        <p className="mu-type mu-term-echo">&gt; {b.echo}</p>
+                      ) : null}
+                      <TypeSequence
+                        lines={b.lines}
+                        onDone={
+                          b.widget ? () => markWidgetReady(b.id) : undefined
+                        }
+                      />
+                      {/* The widget waits for the block's title/hint to finish
+                          typing, then reveals itself (and cascades its pads). */}
+                      {b.widget === 'soundboard' && widgetReady.has(b.id) ? (
+                        <SoundBoard soundLevel={soundLevel} />
+                      ) : null}
+                    </div>
+                  </React.Fragment>
                 ))}
                 {destruct != null ? (
                   <Alert title="Emergency destruct">
@@ -610,60 +809,103 @@ export function Console({
         {!isHardcopy ? (
           <div className="mu-console-dock">
             <div className="mu-dock-nav">
-              <nav aria-label="Queries">
-                <ul className="mu-menu">
-                  {MENU.map((q) => (
-                    <li key={q.name}>
-                      <MenuOption
-                        index={q.index!}
-                        label={q.label}
-                        hint={q.hint}
-                        href={q.path}
-                        active={pathname === q.path}
-                        onSelect={(e) => {
-                          e.preventDefault()
-                          if (q.path) navigate({ to: q.path })
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              {suggestions.length ? (
-                <div className="mu-suggest-panel" aria-label="Commands">
-                  <p className="mu-suggest-head">
-                    COMMANDS
-                    <span className="mu-suggest-head-filter">
-                      {' '}
-                      — TYPE TO FILTER
-                    </span>
+              {eggMode ? (
+                // Once an egg is active the numbered menu becomes an egg-control
+                // panel of the six classified directives — set apart from the
+                // sanctioned nav with a caution frame + a jittering header so it
+                // reads as an off-book subsystem. Unlike the Queries menu this
+                // one is kept visible on mobile too (handy for tapping eggs).
+                <nav aria-label="Easter eggs" className="mu-egg-nav">
+                  <p
+                    className="mu-egg-nav-head"
+                    data-text="◈ Restricted — eyes only"
+                  >
+                    ◈ Restricted — eyes only
                   </p>
-                  <ul className="mu-suggest">
-                    {suggestions.map((q) => (
-                      <li key={q.name}>
-                        <button
-                          type="button"
-                          className="mu-suggest-item"
-                          data-group={q.group}
-                          // preventDefault on mousedown keeps the input focused
-                          // (so the panel doesn't close before activation);
-                          // onClick fires for both pointer and keyboard
-                          // (Enter/Space), so the item is keyboard-operable.
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            run(q.name)
-                            setValue('')
-                            setPickerOpen(false)
+                  <ul className="mu-menu mu-menu-eggs">
+                    {EGG_CONTROLS.map((egg, i) => (
+                      <li key={egg.cmd}>
+                        <MenuOption
+                          index={String(i + 1)}
+                          label={egg.label}
+                          hint={egg.hint}
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            run(egg.cmd)
                             inputRef.current?.blur()
                           }}
-                        >
-                          <span className="mu-suggest-name">{q.name}</span>
-                          <span className="mu-suggest-hint">{q.hint}</span>
-                        </button>
+                        />
                       </li>
                     ))}
                   </ul>
+                </nav>
+              ) : (
+                <nav aria-label="Queries">
+                  <ul className="mu-menu">
+                    {MENU.map((q) => (
+                      <li key={q.name}>
+                        <MenuOption
+                          index={q.index!}
+                          label={q.label}
+                          hint={q.hint}
+                          href={q.path}
+                          active={pathname === q.path}
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            if (q.path) navigate({ to: q.path })
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
+
+              {suggestions.length ? (
+                <div className="mu-suggest-panel" aria-label="Commands">
+                  {suggestions.some((q) => q.group !== 'easter') ? (
+                    <>
+                      <p className="mu-suggest-head">
+                        COMMANDS
+                        <span className="mu-suggest-head-filter">
+                          {' '}
+                          — TYPE TO FILTER
+                        </span>
+                      </p>
+                      <ul className="mu-suggest">
+                        {suggestions
+                          .filter((q) => q.group !== 'easter')
+                          .map((q) => (
+                            <SuggestItem
+                              key={q.name}
+                              suggestion={q}
+                              onPick={pickSuggestion}
+                            />
+                          ))}
+                      </ul>
+                    </>
+                  ) : null}
+                  {/* The easter eggs get their own group so they read as the
+                      off-book, classified transmissions they are — set apart in
+                      caution amber under a RESTRICTED heading. */}
+                  {suggestions.some((q) => q.group === 'easter') ? (
+                    <>
+                      <p className="mu-suggest-head mu-suggest-head-easter">
+                        ◈ Restricted — eyes only
+                      </p>
+                      <ul className="mu-suggest">
+                        {suggestions
+                          .filter((q) => q.group === 'easter')
+                          .map((q) => (
+                            <SuggestItem
+                              key={q.name}
+                              suggestion={q}
+                              onPick={pickSuggestion}
+                            />
+                          ))}
+                      </ul>
+                    </>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -720,26 +962,31 @@ export function Console({
               <KeyCap>↑</KeyCap> history
               <KeyCap>Esc</KeyCap> home
             </div>
-            <nav className="mu-pager" aria-label="Page navigation">
-              <button
-                type="button"
-                className="mu-pager-btn mu-pager-prev"
-                onClick={() => navigate({ to: pager.prev.path })}
-                aria-label={`Previous page: ${pager.prev.name}`}
-              >
-                <span aria-hidden="true">◂ </span>
-                {pager.prev.name}
-              </button>
-              <button
-                type="button"
-                className="mu-pager-btn mu-pager-next"
-                onClick={() => navigate({ to: pager.next.path })}
-                aria-label={`Next page: ${pager.next.name}`}
-              >
-                {pager.next.name}
-                <span aria-hidden="true"> ▸</span>
-              </button>
-            </nav>
+            {/* The mobile prev/next pager is suppressed in egg mode: the egg
+                controls take that row instead, and Reset terminal / the command
+                input are enough to get back to a page. */}
+            {!eggMode ? (
+              <nav className="mu-pager" aria-label="Page navigation">
+                <button
+                  type="button"
+                  className="mu-pager-btn mu-pager-prev"
+                  onClick={() => navigate({ to: pager.prev.path })}
+                  aria-label={`Previous page: ${pager.prev.name}`}
+                >
+                  <span aria-hidden="true">◂ </span>
+                  {pager.prev.name}
+                </button>
+                <button
+                  type="button"
+                  className="mu-pager-btn mu-pager-next"
+                  onClick={() => navigate({ to: pager.next.path })}
+                  aria-label={`Next page: ${pager.next.name}`}
+                >
+                  {pager.next.name}
+                  <span aria-hidden="true"> ▸</span>
+                </button>
+              </nav>
+            ) : null}
           </div>
         ) : null}
       </div>

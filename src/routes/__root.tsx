@@ -43,6 +43,18 @@ function RootDocument() {
     <html lang="en" data-palette="mother">
       <head>
         <HeadContent />
+        {/* Runs before first paint: flag JS so the output can be hidden until
+            the client takes over the typing (see .mu-js in styles.css), with a
+            failsafe that reveals it even if the app never mounts. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "document.documentElement.classList.add('mu-js');" +
+              'setTimeout(function(){' +
+              "document.documentElement.classList.add('mu-ready')" +
+              '},4000)',
+          }}
+        />
       </head>
       <body>
         <Console>

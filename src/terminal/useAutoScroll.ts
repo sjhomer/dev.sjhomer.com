@@ -108,7 +108,15 @@ export function useAutoScroll(
 
     const onUser = () => pause()
     const onScroll = () => {
-      // A scroll we did not cause (scrollbar drag, etc.) means the user took over.
+      // Before auto-read has begun moving, a scroll is environmental (the view
+      // transition / reflow / the router restoring the previous offset), not a
+      // user takeover — absorb it so it doesn't falsely pause a fresh view.
+      // Once we're moving, a scroll we did not cause (scrollbar drag, etc.) is
+      // the user taking over, so we stop.
+      if (!interval) {
+        expectedTop = el.scrollTop
+        return
+      }
       if (Math.abs(el.scrollTop - expectedTop) > 3) pause()
     }
     const SCROLL_KEYS = new Set([

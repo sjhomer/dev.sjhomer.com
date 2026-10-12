@@ -155,6 +155,17 @@ describe('audio manager', () => {
     expect(s.player.play).toHaveBeenCalledWith('allclear')
   })
 
+  it('plays the danger klaxon only when audible', async () => {
+    const s = setup()
+    await s.mgr.arm()
+    s.mgr.setLevel('off')
+    s.mgr.warning()
+    expect(s.player.play).not.toHaveBeenCalled()
+    s.mgr.setLevel('on')
+    s.mgr.warning()
+    expect(s.player.play).toHaveBeenCalledWith('warning')
+  })
+
   it('throttles rapid clacks', async () => {
     // now advances 0, 10, 50 → second click (10ms) throttled, third (50ms) ok
     const s = setup({ nowSeq: [0, 10, 50] })

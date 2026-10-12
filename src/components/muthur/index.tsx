@@ -235,6 +235,9 @@ export function MorphLine(props: MorphLineProps): React.ReactElement {
       setTyping(true)
       setMorphed(false)
       setShown('')
+      // The ominous klaxon rises as the damning verdict begins to appear, and
+      // carries through the hang while the cursor rests on it.
+      audio.warning()
       for (let i = 1; i <= text.length; i++) {
         if (cancelled) return
         setShown(text.slice(0, i))
@@ -257,6 +260,9 @@ export function MorphLine(props: MorphLineProps): React.ReactElement {
       }
       if (cancelled) return
       setTyping(false)
+      // The verdict is amended to safety: the same pleasant all-clear the
+      // self-destruct egg plays when it resolves without detonating.
+      audio.allClear()
       doneRef.current?.()
     }
     void run()
@@ -439,22 +445,41 @@ export function Staged(
     }
   }, [n, total, gap, gen])
 
-  // Report completion only when the sequence actually finishes (n crosses to
-  // total via advancing), never on the initial full render.
+  // Whether the final block self-times (Typewriter / TypeSequence / Staged). If
+  // so the sequence isn't finished when that block merely *appears* — it must
+  // finish printing — so completion is driven by its own onDone below, not by
+  // the reveal. (Reporting done on reveal is what let sibling records, e.g. the
+  // service-log roles, start printing before the previous one had finished.)
+  const lastSelfTiming = total > 0 && isSequenced(items[total - 1])
+
+  // Report completion when the sequence actually finishes, never on the initial
+  // full render. For a non-self-timing final block that's when it is revealed
+  // (n crosses to total); for a self-timing final block it's that block's own
+  // onDone (wired below), so this effect stands down.
   useEffect(() => {
     const was = prevN.current
     prevN.current = n
-    if (started.current && total > 0 && n >= total && was < total)
+    if (
+      started.current &&
+      total > 0 &&
+      n >= total &&
+      was < total &&
+      !lastSelfTiming
+    )
       doneRef.current?.()
-  }, [n, total])
+  }, [n, total, lastSelfTiming])
 
   const shown = items.slice(0, n).map((child, i) => {
-    if (i !== n - 1 || n >= total || !isSequenced(child)) return child
+    if (i !== n - 1 || !isSequenced(child)) return child
     const prev = child.props.onDone
+    const isFinal = i >= total - 1
     return React.cloneElement(child, {
       onDone: () => {
         prev?.()
-        advance()
+        // The active block finished printing: advance to the next, or — if it
+        // was the final block — report the whole sequence complete.
+        if (isFinal) doneRef.current?.()
+        else advance()
       },
     })
   })
