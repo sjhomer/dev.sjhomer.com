@@ -58,4 +58,22 @@ describe('content model', () => {
     expect(missions.length).toBeGreaterThanOrEqual(6)
     for (const m of missions) expect(m.brief.length).toBeGreaterThan(20)
   })
+
+  it('leads the mission log with the portfolio, then Battlefy Player Hub', () => {
+    expect(missions[0].id).toBe('dev-sjhomer-portfolio')
+    expect(missions[1].id).toBe('battlefy-player-hub')
+  })
+
+  it('gives the portfolio entry approach bullets and named links', () => {
+    const site = missions.find((m) => m.id === 'dev-sjhomer-portfolio')!
+    expect(site.approach && site.approach.length).toBeGreaterThan(0)
+    expect(site.links?.map((l) => l.href)).toContain('https://dev.sjhomer.com')
+  })
+
+  it('references both Battlefy Player Hub live hubs', () => {
+    const hub = missions.find((m) => m.id === 'battlefy-player-hub')!
+    const hrefs = hub.links?.map((l) => l.href) ?? []
+    expect(hrefs).toContain('https://battlefy.com/nintendovs')
+    expect(hrefs).toContain('https://battlefy.com/battlefield')
+  })
 })

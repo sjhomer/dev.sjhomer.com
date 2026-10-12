@@ -39,7 +39,8 @@ test('menu navigation reaches a query page with its own URL', async ({
     .first()
     .click()
   await expect(page).toHaveURL(/\/missions$/)
-  await expect(page.getByText(/Recovery GPT/).first()).toBeVisible()
+  // The mission log now leads with the portfolio case study.
+  await expect(page.getByText(/MU\/TH\/UR 6000 Portfolio/).first()).toBeVisible()
 })
 
 test('query pages work without JavaScript (SSR + progressive enhancement)', async ({

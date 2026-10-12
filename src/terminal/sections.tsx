@@ -235,6 +235,11 @@ export function MissionsSection(): React.ReactElement {
           </div>
           <h3 className="mu-log-title">{m.title}</h3>
           <Typewriter text={m.brief} />
+          {m.approach?.length ? (
+            <TypeSequence
+              lines={m.approach.map((text) => ({ text: '■ ' + text }))}
+            />
+          ) : null}
           {m.tech.length ? (
             <div className="mu-row">
               {m.tech.map((t) => (
@@ -244,16 +249,33 @@ export function MissionsSection(): React.ReactElement {
               ))}
             </div>
           ) : null}
-          {m.link ? (
-            <p className="mu-type">
-              <a
-                className="mu-link"
-                href={m.link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {m.link.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-              </a>
+          {m.link || m.links?.length ? (
+            <p className="mu-type mu-mission-links">
+              {[
+                ...(m.link
+                  ? [
+                      {
+                        label: m.link
+                          .replace(/^https?:\/\//, '')
+                          .replace(/\/$/, ''),
+                        href: m.link,
+                      },
+                    ]
+                  : []),
+                ...(m.links ?? []),
+              ].map((l, i) => (
+                <React.Fragment key={l.href}>
+                  {i > 0 ? <span aria-hidden="true"> · </span> : null}
+                  <a
+                    className="mu-link"
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {l.label}
+                  </a>
+                </React.Fragment>
+              ))}
             </p>
           ) : null}
         </Staged>
