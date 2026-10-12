@@ -249,12 +249,14 @@ export function MissionsSection(): React.ReactElement {
               {[
                 ...(m.link
                   ? [
-                      {
-                        label: m.link
-                          .replace(/^https?:\/\//, '')
-                          .replace(/\/$/, ''),
-                        href: m.link,
-                      },
+                      typeof m.link === 'string'
+                        ? {
+                            label: m.link
+                              .replace(/^https?:\/\//, '')
+                              .replace(/\/$/, ''),
+                            href: m.link,
+                          }
+                        : m.link,
                     ]
                   : []),
                 ...(m.links ?? []),

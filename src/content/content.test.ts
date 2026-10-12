@@ -69,6 +69,17 @@ describe('content model', () => {
     expect(site.links?.map((l) => l.href)).toContain('https://dev.sjhomer.com')
   })
 
+  it('allows a mission link to be a {label, href} (archived case studies)', () => {
+    // ASTTBC/Bitbuy/Longos point to the Internet Archive while still showing
+    // their original therefore.ca URL as the label.
+    const asttbc = missions.find((m) => m.id === 'etc-certification')!
+    expect(typeof asttbc.link).toBe('object')
+    const link = asttbc.link as { label: string; href: string }
+    expect(link.label).toBe('www.therefore.ca/case-studies/asttbc')
+    expect(link.href).toContain('web.archive.org')
+    expect(link.href).toContain('therefore.ca/case-studies/asttbc')
+  })
+
   it('references both Battlefy Player Hub live hubs', () => {
     const hub = missions.find((m) => m.id === 'battlefy-player-hub')!
     const hrefs = hub.links?.map((l) => l.href) ?? []

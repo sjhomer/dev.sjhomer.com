@@ -62,8 +62,10 @@ export const missionSchema = z.object({
   brief: z.string().min(1),
   tech: z.array(z.string()).default([]),
   services: z.array(z.string()).default([]),
-  /** A single primary link (legacy); use `links` for several named references. */
-  link: z.string().url().optional(),
+  /** A single primary link: a bare URL (shown stripped), or a `{label, href}`
+   * when the display text and the target differ (e.g. an Internet Archive href
+   * shown under its original URL). Use `links` for several named references. */
+  link: z.union([z.string().url(), linkSchema]).optional(),
   links: z.array(linkSchema).optional(),
   era: z.string().optional(),
 })
