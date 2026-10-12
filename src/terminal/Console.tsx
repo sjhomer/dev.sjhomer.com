@@ -24,6 +24,7 @@ import type { SoundLevel } from './audio'
 import { useAutoScroll } from './useAutoScroll'
 import { SoundBoard } from './SoundBoard'
 import { SoundGate } from './SoundGate'
+import { Knob } from './Knob'
 import './console.css'
 
 /**
@@ -52,6 +53,12 @@ const PALETTE_NAMES: Record<string, string> = {
   mother: 'green',
   sevastopol: 'amber',
   hardcopy: 'hardcopy',
+}
+/** Short colour name shown on the palette knob's tab. */
+const PALETTE_TAB: Record<string, string> = {
+  mother: 'GREEN',
+  sevastopol: 'AMBER',
+  hardcopy: 'PAPER',
 }
 
 interface Block {
@@ -694,20 +701,33 @@ export function Console({
             <ShipClock />
           </div>
           <div className="mu-console-ctl">
-            <button type="button" className="mu-toggle" onClick={cyclePalette}>
-              Palette: {PALETTE_NAMES[palette]}
-            </button>
-            <button
-              type="button"
-              className="mu-toggle"
-              aria-pressed={fxOff}
+            <Knob
+              label="Thm."
+              positions={PALETTES.length}
+              index={PALETTES.indexOf(palette as (typeof PALETTES)[number])}
+              colorTab={PALETTE_TAB[palette]}
+              on
+              onClick={cyclePalette}
+              ariaLabel={`Theme: ${PALETTE_NAMES[palette]}. Change palette.`}
+            />
+            <Knob
+              label="CRT"
+              positions={2}
+              index={fxOff ? 0 : 1}
+              endLabels={['off', 'on']}
+              on={!fxOff}
               onClick={toggleFx}
-            >
-              Effects {fxOff ? 'off' : 'on'}
-            </button>
-            <button type="button" className="mu-toggle" onClick={cycleVolume}>
-              Volume: {soundLevel}
-            </button>
+              ariaLabel={`CRT effects ${fxOff ? 'off' : 'on'}. Toggle.`}
+            />
+            <Knob
+              label="Vol."
+              positions={2}
+              index={soundLevel === 'on' ? 1 : 0}
+              endLabels={['off', 'on']}
+              on={soundLevel === 'on'}
+              onClick={cycleVolume}
+              ariaLabel={`Volume ${soundLevel}. Toggle.`}
+            />
           </div>
         </div>
       )}
