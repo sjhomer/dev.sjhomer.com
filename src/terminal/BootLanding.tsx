@@ -1,6 +1,12 @@
 import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { ProgressBar, Staged, Typewriter } from '../components/muthur'
+import {
+  ProgressBar,
+  Staged,
+  Typewriter,
+  TypingGain,
+} from '../components/muthur'
+import { KEY_GAIN } from './audio'
 import { profile } from '../content'
 
 function prefersReduced(): boolean {
@@ -55,34 +61,38 @@ function BootBar({
 ;(BootBar as unknown as { __staged?: boolean }).__staged = true
 
 export function BootLanding(): React.ReactElement {
+  // The landing boot keeps the louder typing level; typing on every other view
+  // runs at the quieter default carried by TypingGain.
   return (
-    <Staged className="mu-boot" gap={240}>
-      <Typewriter
-        text="INTERFACE 2037 READY FOR INQUIRY"
-        tone="dim"
-        cps={240}
-      />
-      <Typewriter
-        as="h1"
-        variant="display"
-        text="MU/TH/UR 6000"
-        className="mu-boot-banner"
-      />
-      <Staged className="mu-boot-bars" gap={0}>
-        <BootBar label="CORE SYSTEMS" />
-        <BootBar label="CREW MANIFEST" />
-        <BootBar label="PERSONNEL FILE" />
+    <TypingGain.Provider value={KEY_GAIN}>
+      <Staged className="mu-boot" gap={240}>
+        <Typewriter
+          text="INTERFACE 2037 READY FOR INQUIRY"
+          tone="dim"
+          cps={240}
+        />
+        <Typewriter
+          as="h1"
+          variant="display"
+          text="MU/TH/UR 6000"
+          className="mu-boot-banner"
+        />
+        <Staged className="mu-boot-bars" gap={0}>
+          <BootBar label="CORE SYSTEMS" />
+          <BootBar label="CREW MANIFEST" />
+          <BootBar label="PERSONNEL FILE" />
+        </Staged>
+        <Typewriter
+          text={`PERSONNEL FILE: HOMER, S.J.  CLEARANCE: ${profile.clearance}`}
+          tone="caution"
+          cps={60}
+        />
+        <Typewriter
+          text="SELECT A QUERY BELOW, OR TYPE A COMMAND."
+          tone="dim"
+          cps={240}
+        />
       </Staged>
-      <Typewriter
-        text={`PERSONNEL FILE: HOMER, S.J.  CLEARANCE: ${profile.clearance}`}
-        tone="caution"
-        cps={60}
-      />
-      <Typewriter
-        text="SELECT A QUERY BELOW, OR TYPE A COMMAND."
-        tone="dim"
-        cps={240}
-      />
-    </Staged>
+    </TypingGain.Provider>
   )
 }

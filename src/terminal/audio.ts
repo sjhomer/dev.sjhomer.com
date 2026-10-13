@@ -22,8 +22,14 @@ const STORE_KEY = 'mu-sound'
  * Per-sprite gain for the typing clacks, relative to the base level. The boot
  * cue and the "system online" chime play at the full level; the per-character
  * text-rendering clack is deliberately softer so continuous typing stays gentle.
+ *
+ * `KEY_GAIN` is the landing boot's level (and the default for one-off UI
+ * feedback clicks). `KEY_GAIN_SOFT` is the quieter level for typing on every
+ * other view — the content pages and easter eggs — where continuous clacking at
+ * the louder level was too loud and distracting.
  */
 export const KEY_GAIN = 0.5
+export const KEY_GAIN_SOFT = 0.05
 
 /** Level → Howler volume (0..1). 'on' is deliberately gentle (full was too loud). */
 export function levelToVolume(level: SoundLevel): number {
@@ -79,8 +85,13 @@ export interface AudioManager {
   arm: () => Promise<void>
   /** Play the boot cue if audible; handlers report autoplay success/block. */
   playBoot: (handlers?: BootHandlers) => Promise<boolean>
-  /** Play a throttled key clack if armed + audible. Safe to call anytime. */
-  click: () => void
+  /**
+   * Play a throttled key clack if armed + audible. Safe to call anytime.
+   * `gain` scales this clack's own volume relative to the base level (defaults
+   * to the louder landing/feedback level; callers typing elsewhere pass the
+   * softer `KEY_GAIN_SOFT`).
+   */
+  click: (gain?: number) => void
   /**
    * Play one self-destruct countdown tick if armed + audible. `rise` in [0,1]
    * (0 at the top of the count, →1 near zero) raises the pitch as it climbs.
@@ -140,7 +151,7 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       player.play('boot')
       return true
     },
-    click() {
+    click(gain = KEY_GAIN) {
       if (!player || level === 'off') return
       const t = deps.now()
       if (t - lastClick < CLICK_THROTTLE_MS) return
@@ -148,7 +159,7 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       const id = player.play(KEYS[Math.floor(Math.random() * KEYS.length)])
       // Turn this clack's own sound id down so typing stays soft while the boot
       // cue and chime keep the full level.
-      player.volume(levelToVolume(level) * KEY_GAIN, id)
+      player.volume(levelToVolume(level) * gain, id)
     },
     countdown(rise: number) {
       if (!player || level === 'off') return
