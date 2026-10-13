@@ -3,6 +3,7 @@ import {
   autoplayLikely,
   createAudioManager,
   KEY_GAIN,
+  KEY_GAIN_SOFT,
   levelToVolume,
   nextLevel,
 } from './audio'
@@ -125,6 +126,15 @@ describe('audio manager', () => {
     // The clack's own sound id is turned down relative to boot/chime so typing
     // stays soft; play() returns id 1 from the fake player.
     expect(s.player.volume).toHaveBeenCalledWith(0.35 * KEY_GAIN, 1)
+  })
+
+  it('scales a key clack by the caller-supplied gain (quieter elsewhere)', async () => {
+    const s = setup({ nowSeq: [0] })
+    await s.mgr.arm()
+    s.mgr.setLevel('on')
+    // Typing on views other than the landing boot passes the softer gain.
+    s.mgr.click(KEY_GAIN_SOFT)
+    expect(s.player.volume).toHaveBeenCalledWith(0.35 * KEY_GAIN_SOFT, 1)
   })
 
   it('plays the countdown tick at a rising rate and stays silent when off', async () => {

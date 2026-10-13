@@ -1,7 +1,14 @@
 import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { audio } from '../../terminal/audio'
+import { audio, KEY_GAIN_SOFT } from '../../terminal/audio'
 import './muthur.css'
+
+/**
+ * Per-sprite gain for the typing clacks within this subtree. Defaults to the
+ * quieter "elsewhere" level (content pages, easter eggs); the landing boot
+ * raises it to the louder level by wrapping its sequence in a Provider.
+ */
+export const TypingGain = React.createContext<number>(KEY_GAIN_SOFT)
 
 /**
  * MU/TH/UR Interface — React 19 port of the design system's component bundle.
@@ -83,8 +90,13 @@ export function useReveal(
 ): [number, () => void] {
   const instant = !isFinite(cps) || cps <= 0
   const [count, setCount] = useState(total)
+  const keyGain = React.useContext(TypingGain)
   const doneRef = useRef(onDone)
   doneRef.current = onDone
+  // Mirror the gain into a ref so the rAF loop reads the latest without needing
+  // it in the effect's dependency list (a gain change shouldn't restart typing).
+  const gainRef = useRef(keyGain)
+  gainRef.current = keyGain
   useEffect(() => {
     if (instant || reducedMotion()) {
       setCount(total)
@@ -99,7 +111,7 @@ export function useReveal(
     const tick = (now: number) => {
       const n = Math.floor((Math.max(0, now - start) * cps) / 1000)
       if (n >= total) {
-        if (total > emitted) audio.click() // final character
+        if (total > emitted) audio.click(gainRef.current) // final character
         setCount(total)
         finished = true
         doneRef.current?.()
@@ -107,7 +119,7 @@ export function useReveal(
       }
       if (n > emitted) {
         emitted = n
-        audio.click() // one clack per revealed frame (manager throttles)
+        audio.click(gainRef.current) // one clack per revealed frame (manager throttles)
       }
       setCount(n)
       raf = requestAnimationFrame(tick)
@@ -215,6 +227,9 @@ export function MorphLine(props: MorphLineProps): React.ReactElement {
   const [shown, setShown] = useState(text)
   const [morphed, setMorphed] = useState(false)
   const [typing, setTyping] = useState(false)
+  const keyGain = React.useContext(TypingGain)
+  const gainRef = useRef(keyGain)
+  gainRef.current = keyGain
   const doneRef = useRef(props.onDone)
   doneRef.current = props.onDone
   useEffect(() => {
@@ -241,21 +256,21 @@ export function MorphLine(props: MorphLineProps): React.ReactElement {
       for (let i = 1; i <= text.length; i++) {
         if (cancelled) return
         setShown(text.slice(0, i))
-        audio.click()
+        audio.click(gainRef.current)
         await wait(1000 / TYPE_CPS)
       }
       await wait(hold) // cursor hangs at the end of "CREW EXPENDABLE."
       for (let i = text.length - 1; i >= 0; i--) {
         if (cancelled) return
         setShown(text.slice(0, i))
-        audio.click()
+        audio.click(gainRef.current)
         await wait(1000 / DEL_CPS)
       }
       setMorphed(true) // from here the line carries the amended tone
       for (let i = 1; i <= morphTo.length; i++) {
         if (cancelled) return
         setShown(morphTo.slice(0, i))
-        audio.click()
+        audio.click(gainRef.current)
         await wait(1000 / TYPE_CPS)
       }
       if (cancelled) return
