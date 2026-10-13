@@ -29,7 +29,7 @@ const STORE_KEY = 'mu-sound'
  * the louder level was too loud and distracting.
  */
 export const KEY_GAIN = 0.5
-export const KEY_GAIN_SOFT = 0.15
+export const KEY_GAIN_SOFT = 0.05
 
 /** Level → Howler volume (0..1). 'on' is deliberately gentle (full was too loud). */
 export function levelToVolume(level: SoundLevel): number {
