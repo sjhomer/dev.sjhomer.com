@@ -1,7 +1,7 @@
 /**
  * The query registry: the single source for the numbered menu, command parsing,
  * auto-complete and the route each query maps to. Section queries navigate to a
- * real URL (shareable, SSR); transient commands (HELP, eggs, ASK) print to the
+ * real URL (shareable, SSR); transient commands (the eggs) print to the
  * console's output log instead (see eggs.tsx).
  */
 export interface Query {
@@ -127,8 +127,8 @@ export interface Suggestion {
 
 /**
  * Every command the visible auto-complete offers, grouped for discovery.
- * CV, ASK and DOWNLOAD are intentionally left out of the visible list (CV is
- * off-menu; ASK/DOWNLOAD stay runnable by typing) to keep the menu focused.
+ * CV and DOWNLOAD are intentionally left out of the visible list (CV is
+ * off-menu; DOWNLOAD stays runnable by typing) to keep the menu focused.
  * The per-employer `LOG <X>` filters are deliberately absent too — the Service
  * Log page carries its own employer tabs, so listing them here was redundant
  * clutter; typing `LOG BATTLEFY` et al. still routes (see Console.run()).
@@ -141,7 +141,6 @@ const SUGGESTABLE: Array<Suggestion> = [
   })),
   // GUIDE (the design manual) is off the numbered menu but surfaced here in its
   // own section so it reads as the standalone reference it is (and Tab-completes).
-  // HELP stays runnable by typing, but is kept out of the visible menu.
   { name: 'GUIDE', hint: 'interface design manual', group: 'manual' },
   {
     name: 'SPECIAL ORDER 937',

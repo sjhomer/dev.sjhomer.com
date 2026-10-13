@@ -12,9 +12,7 @@ import type { Line } from '../components/muthur'
 import { MENU, complete, pageNav, resolvePath, suggest } from './queries'
 import type { Suggestion } from './queries'
 import {
-  askLines,
   debugLines,
-  helpLines,
   jonesyLines,
   rollDice,
   rollLines,
@@ -654,12 +652,6 @@ export function Console({
       return true
     }
 
-    if (cmd === 'HELP') {
-      setEggMode(true)
-      print(cmd, helpLines())
-      return true
-    }
-
     const logm = /^(?:SERVICE )?LOG\s+(.+)$/.exec(cmd)
     if (logm) {
       navigate({ to: '/log', search: { f: logm[1] } })
@@ -695,11 +687,6 @@ export function Console({
         void audio.arm().then(() => audio.warning())
       }
       print(cmd, rollLines(roll))
-      return true
-    }
-    if (cmd.startsWith('ASK')) {
-      setEggMode(true)
-      print(cmd, askLines(cmd.slice(3).trim()))
       return true
     }
     if (cmd === 'SPECIAL ORDER 937') {

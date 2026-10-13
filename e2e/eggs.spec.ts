@@ -182,16 +182,3 @@ test('an aborted self-destruct stays in order when a later egg runs', async ({
   const ly = (await laterEgg.boundingBox())!.y
   expect(py).toBeLessThan(ly)
 })
-
-test('HELP lists the available queries, including the design manual', async ({
-  page,
-}) => {
-  await page.goto('/')
-  await waitForHydration(page)
-  await runCommand(page, 'HELP')
-
-  const egg = page.locator('.mu-egg')
-  await expect(egg).toContainText('AVAILABLE QUERIES', { timeout: 8000 })
-  await expect(egg).toContainText('GUIDE')
-  await expect(egg).toContainText('SOME DIRECTIVES ARE CLASSIFIED')
-})

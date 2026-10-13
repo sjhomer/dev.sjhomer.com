@@ -246,7 +246,7 @@ weekend, and then refined under its own weight.
 | **10-12** | Release polish merged as **v0.1, the go-live**: the whole MU/TH/UR, verified end to end, in one consolidated change.                                                                                                                                                                                                                 |
 | 10-12     | Post-launch refit (v0.2): this README as a case study, the portfolio and Battlefy Player Hub missions, the analog **control knobs** in the header, the **design manual** at `/guide`, a dead-code pass that wires the advertised `HELP`, a palette context, and a button-driven self-destruct abort with escalating re-confirmation. |
 | 10-12     | Patches (v0.3): archived links for a defunct agency site, a first-visit **Welcome** modal in place of a bare sound gate, arrow-key navigation of the suggestion list, a larger wordmark with a power-glyph affordance.                                                                                                               |
-| **10-13** | The landing boot replays when you return home; typing elsewhere is softened and its key clacks dropped to five percent; `⌘`/`Ctrl`+number is handed back to the browser.                                                                                                                                                             |
+| **10-13** | The landing boot replays when you return home; typing elsewhere is softened and its key clacks dropped to five percent; `⌘`/`Ctrl`+number is handed back to the browser. The site mark lands as the favicon, and the leftover `HELP` and mocked `ASK` commands are removed as dead code, tests included.                             |
 
 Nothing here was generated once and shipped. It was tuned: the cadence of the
 typing, the exact green, the weight of the bloom, the way a line _holds_ before
@@ -382,7 +382,7 @@ through the same gate before it reaches the Worker.
 - **Unit tests** (Vitest, jsdom) cover the content schemas, the query registry
   and auto-complete, the easter-egg handlers, the audio manager's gating and
   persistence, the knob, the sound board and the section renderers.
-- **End-to-end tests** (Playwright, Chromium) run thirty-seven scenarios across
+- **End-to-end tests** (Playwright, Chromium) run thirty-six scenarios across
   eight specs: the boot landing and menu, keyboard operability and a single
   `h1` per route, no-JS rendering, the welcome gate and volume persistence, the
   reading-paced auto-scroll, mobile pager and picker, the suggestion list's
