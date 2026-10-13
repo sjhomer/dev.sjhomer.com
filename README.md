@@ -15,16 +15,19 @@ the theatre.
 
 ![The MU/TH/UR 6000 boot sequence](docs/media/boot.png)
 
-```
-SELECT A SECTION:
-  I    THE SPARK            why a ship's computer
-  II   THREE ARTIFACTS      the plan, the design system, the prototype
-  III  THE SERVICE LOG      four days, in order
-  IV   PLAN VS. SHIP        what survived, what changed
-  V    ANATOMY OF A LINE    the craft under the theatre
-  VI   CLASSIFIED           the easter eggs
-  VII  VERIFICATION         how it is kept honest
-```
+**SELECT A SECTION:**
+
+- [I. THE SPARK](#i-the-spark) — why a ship's computer
+- [II. THREE ARTIFACTS](#ii-three-artifacts-before-a-line-of-code) — the plan,
+  the design system, the prototype
+- [III. THE SERVICE LOG](#iii-the-service-log-four-days-in-order) — four days,
+  in order
+- [IV. PLAN VS. SHIP](#iv-plan-versus-ship-what-survived-what-changed) — what
+  survived, what changed
+- [V. ANATOMY OF A LINE](#v-anatomy-of-a-typed-line) — the craft under the
+  theatre
+- [VI. CLASSIFIED](#vi-classified-directives) — the easter eggs
+- [VII. VERIFICATION](#vii-verification) — how it is kept honest
 
 ---
 
@@ -57,10 +60,10 @@ consequence of that one sentence.
 ## II. Three artifacts before a line of code
 
 The site was designed on paper first, as three linked documents that I could
-argue with before I had to argue with a compiler. They were drafted on the same
-day, 10 October, and the repository was created that evening. Each one answers
-a different question, and together they are the specification the build was
-measured against.
+argue with before I had to argue with a compiler. They were drafted around 10
+October, before the terminal existed in code, and the repository was created
+the same day. Each one answers a different question, and together they are the
+specification the build was measured against.
 
 | Artifact                               | What it is                                                                                                      | What it settled                                                                           |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -92,11 +95,13 @@ server rendering gives crawlers and no-JS readers the full text while the
 terminal animates on top. A hand-rolled terminal engine rather than `xterm.js`,
 because xterm is built for real shells and a custom renderer keeps text in the
 DOM, selectable and accessible. Tailwind v4 over CSS custom properties for the
-phosphor palette. Howler for sound, off by default. TypeScript data files
-validated with Zod, so that one source feeds the terminal, `/cv`, structured
-data and a PDF. Cloudflare Workers at the edge. Vitest for the engine and
-Playwright for the boot and command flows. And an optional "Ask MOTHER": a
-server function calling Claude, answering only from the content files.
+phosphor palette. Howler for sound, which the plan wanted off by default.
+TypeScript data files validated with Zod, so that one source feeds the
+terminal, `/cv`, structured data and a PDF. Cloudflare Workers at the edge.
+Vitest for the engine and Playwright for the boot and command flows. The plan
+also reserved room for an optional "Ask MOTHER", a server function calling a
+language model and answering only from the content files. It was never built,
+and the ledger in section IV says why.
 
 It specified the content model as six collections, each mapped to a query:
 
@@ -206,9 +211,9 @@ record.
 
 It also had the eggs. `SPECIAL ORDER 937` already amended itself on screen.
 `WHAT'S THE STORY MOTHER` already armed a ten-second countdown with `OVERRIDE`
-to abort. `ROLL D20` already knew about critical failures and the airlock. `ASK`
-returned canned, keyword-matched answers with a visible note that the live site
-would ask a model instead.
+to abort. `ROLL D20` already knew about critical failures and the airlock. A
+mocked `ASK` returned canned answers, with a note that a live model was still
+only an idea.
 
 What the prototype proved was pacing. Ninety characters a second for prose
 turned out to be right. A blinking cursor that trails the reveal turned out to
@@ -261,20 +266,20 @@ collections, the three input modes, the phosphor tokens, the progressive
 enhancement spine, the hand-rolled engine, Cloudflare, the test split. The
 character of the site came from the places it changed.
 
-| The plan said                                                                | What shipped                                                                                                                                                                              | Why                                                                                                                                                 |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| An optional **Ask MOTHER** backed by a live model, phase four.               | Dropped before launch. `ASK` still exists and answers from a short, hand-written list, and says so on screen.                                                                             | A terminal that hallucinates its own crew's history is a worse terminal. MOTHER is grounded, not generative.                                        |
-| Four phases, shipped one feature at a time.                                  | The whole experience in one go-live, then three refit releases in two days.                                                                                                               | The terminal, atmosphere, audio and eggs only make sense as one piece. You cannot evaluate a boot sequence without the thing it boots into.         |
-| Domain cutover **after** parity with the legacy page.                        | Cutover on day one, before the terminal existed.                                                                                                                                          | Shipping to the real address from the first commit meant every review happened on production, and there was never a "launch day" to be afraid of.   |
-| `SPECIAL ORDER 937` becomes `SPECIAL ORDER 2005`, the year the career began. | 937 stays 937. The directive prints as written, then CREW EXPENDABLE is backspaced and amended, on screen, to CREW ESSENTIAL. The year 2005 lives in `IN SERVICE SINCE`.                  | The joke is better when the order is the real one. The amendment is the portfolio's whole thesis in one line.                                       |
-| A **decode effect** for headings, characters scrambling before they settle.  | No scramble anywhere. Instead, one `MorphLine` primitive that types a line, holds, deletes it character by character and types a replacement.                                             | Scrambling is a trope from other terminals. Backspacing is what a person at a keyboard actually does, and it is used exactly once, where it counts. |
-| An optional **WebGL** pass for barrel curvature and chromatic offset.        | Never built. The CRT layer is entirely CSS: scanlines, a `text-shadow` bloom, a flicker under three percent, a vignette, an inner bezel shadow.                                           | The plan's own fourth pillar. Curvature makes a wall of text harder to read, and people have to read this.                                          |
-| Nested routes like `/log/battlefy` and `/missions/angular-migration`.        | Six flat routes. The service log filters by employer through a search parameter, and the filter re-runs the typing.                                                                       | Fewer routes, same shareability, and a filter change feels like a new query rather than a new page.                                                 |
-| MDX for long-form content.                                                   | Plain TypeScript objects only.                                                                                                                                                            | Nothing on the site is long-form prose. The content model is a résumé, and a résumé is data.                                                        |
-| Howler with "keyclick, boot hum and alarm cues".                             | Howler, lazily imported, playing one sprite that is **synthesised offline** by a script with a seeded random generator, so the file is reproducible and contains no sampled audio.        | A one-time Welcome modal asks before anything plays. Typing clacks run at two gains: louder on the landing boot, five percent everywhere else.      |
-| Fonts from Google Fonts.                                                     | VT323 and IBM Plex Mono **self-hosted** under the SIL Open Font License.                                                                                                                  | No third-party request on first paint.                                                                                                              |
-| `Person` JSON-LD from the content files.                                     | Still on the plan. The content module is shaped for it, but no structured data is emitted yet.                                                                                            | The PDF and the per-route Open Graph images took its place in the build-time asset pass.                                                            |
-| Not in the plan at all.                                                      | The analog **control knobs**, the **design manual** at `/guide`, the mobile **pager** and **command picker**, the egg **playground mode**, the **Welcome** modal, `DEBUG`, `SOUND BOARD`. | You only think to build an instrument panel once the machine is running and you start treating it like an instrument.                               |
+| The plan said                                                                | What shipped                                                                                                                                                                                                                                                                                                                                    | Why                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| An optional **Ask MOTHER** backed by a live model, phase four.               | Dropped before launch. Nothing on the site calls a model; MOTHER only ever prints what is on file.                                                                                                                                                                                                                                              | A terminal that hallucinates its own crew's history is a worse terminal. MOTHER is grounded, not generative.                                                                                      |
+| Four phases, shipped one feature at a time.                                  | The whole experience in one go-live, then three refit releases in two days.                                                                                                                                                                                                                                                                     | The terminal, atmosphere, audio and eggs only make sense as one piece. You cannot evaluate a boot sequence without the thing it boots into.                                                       |
+| Domain cutover **after** parity with the legacy page.                        | Cutover on day one, before the terminal existed.                                                                                                                                                                                                                                                                                                | Shipping to the real address from the first commit meant every review happened on production, and there was never a "launch day" to be afraid of.                                                 |
+| `SPECIAL ORDER 937` becomes `SPECIAL ORDER 2005`, the year the career began. | 937 stays 937. The directive prints as written, then CREW EXPENDABLE is backspaced and amended, on screen, to CREW ESSENTIAL. The year 2005 lives in `IN SERVICE SINCE`.                                                                                                                                                                        | The joke is better when the order is the real one. The amendment is the portfolio's whole thesis in one line.                                                                                     |
+| A **decode effect** for headings, characters scrambling before they settle.  | No scramble anywhere. Instead, one `MorphLine` primitive that types a line, holds, deletes it character by character and types a replacement.                                                                                                                                                                                                   | Scrambling is a trope from other terminals. Backspacing is what a person at a keyboard actually does, and it is used exactly once, where it counts.                                               |
+| An optional **WebGL** pass for barrel curvature and chromatic offset.        | Never built. The CRT layer is entirely CSS: scanlines, a `text-shadow` bloom, a flicker under three percent, a vignette, an inner bezel shadow.                                                                                                                                                                                                 | The plan's own fourth pillar. Curvature makes a wall of text harder to read, and people have to read this.                                                                                        |
+| Nested routes like `/log/battlefy` and `/missions/angular-migration`.        | Six flat routes. The service log filters by employer through a search parameter, and the filter re-runs the typing.                                                                                                                                                                                                                             | Fewer routes, same shareability, and a filter change feels like a new query rather than a new page.                                                                                               |
+| MDX for long-form content.                                                   | Plain TypeScript objects only.                                                                                                                                                                                                                                                                                                                  | Nothing on the site is long-form prose. The content model is a résumé, and a résumé is data.                                                                                                      |
+| Howler with "keyclick, boot hum and alarm cues", **off by default**.         | **On by default, but unobtrusive.** Howler, lazily imported, plays one sprite that is **synthesised offline** by a script with a seeded random generator, so the file is reproducible and contains no sampled audio. The level is kept gentle and the typing clacks run at two gains: louder on the landing boot, five percent everywhere else. | A first-visit Welcome modal says audio is on before anything plays. Enter keeps it, Escape enters silently, the Vol. knob mutes, and the choice persists. A silent ship's computer is a dead one. |
+| Fonts from Google Fonts.                                                     | VT323 and IBM Plex Mono **self-hosted** under the SIL Open Font License.                                                                                                                                                                                                                                                                        | No third-party request on first paint.                                                                                                                                                            |
+| `Person` JSON-LD from the content files.                                     | Still on the plan. The content module is shaped for it, but no structured data is emitted yet.                                                                                                                                                                                                                                                  | The PDF and the per-route Open Graph images took its place in the build-time asset pass.                                                                                                          |
+| Not in the plan at all.                                                      | The analog **control knobs**, the **design manual** at `/guide`, the mobile **pager** and **command picker**, the egg **playground mode**, the **Welcome** modal, `DEBUG`, `SOUND BOARD`.                                                                                                                                                       | You only think to build an instrument panel once the machine is running and you start treating it like an instrument.                                                                             |
 
 ---
 
@@ -317,11 +322,15 @@ type in below. The first real scroll gesture pauses it for that page.
 Navigating restarts it. It runs on its own timer, decoupled from the typing
 loop, and it is off entirely under reduced motion.
 
-**Sound is original and gated.** Every effect, the boot drone, the three key
-clicks, the countdown tick, the all-clear chime, the danger klaxon, is written
-by a script that synthesises waveforms into a single sprite file, deterministic
-from a seed, with no encoder and no sampled audio anywhere. Howler is imported
-only after the visitor arms sound, so it never touches the first-paint path.
+**Sound is original, and on by default without being loud.** Every effect,
+the boot drone, the three key clicks, the countdown tick, the all-clear chime,
+the danger klaxon, is written by a script that synthesises waveforms into a
+single sprite file, deterministic from a seed, with no encoder and no sampled
+audio anywhere. A first-visit Welcome modal says audio is enabled before
+anything plays; Enter keeps it, Escape enters silently, and the Vol. knob mutes
+it at any time. Howler is imported only on that first gesture, so it never
+touches the first-paint path, and the volume sits well below full because full
+was too loud.
 The audio manager is built from injectable dependencies (clock, storage, player
 loader) so its gating, throttling and persistence are unit-tested under jsdom
 without real Web Audio.
@@ -359,7 +368,6 @@ into a small playground.
 | `JONESY`                  | The ship's cat is accounted for, in ASCII.                                                                                                                                                                                                                                                     |
 | `DEBUG`                   | A tongue-in-cheek self-diagnostic that reads real live values, viewport, palette, sound, uptime, and wraps them in Nostromo flavour. Integrity holds at 94%.                                                                                                                                   |
 | `SOUND BOARD`             | A playable board of every sound effect, revealed one pad at a time. It respects the mute.                                                                                                                                                                                                      |
-| `ASK <QUESTION>`          | MOTHER cross-references a short list of hand-written answers and labels the result as canned. She is grounded, not generative.                                                                                                                                                                 |
 | `↑ ↑ ↓ ↓ ← → ← → B A`     | The Konami code flips the palette to **Sevastopol** amber: _PALETTE OVERRIDE ACCEPTED. WELCOME TO SEVASTOPOL STATION._                                                                                                                                                                         |
 
 ![SPECIAL ORDER 937 amended on screen](docs/media/special-order-937.png)
