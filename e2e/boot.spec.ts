@@ -45,6 +45,30 @@ test('menu navigation reaches a query page with its own URL', async ({
   ).toBeVisible()
 })
 
+test('a bare number key selects a menu page but Cmd/Ctrl+number does not', async ({
+  page,
+}) => {
+  await page.goto('/')
+  // The number-key handler binds after hydration (the ship clock ticking is a
+  // reliable signal), and the input must be unfocused for the shortcut to fire.
+  await expect(page.locator('.mu-clock')).not.toContainText('--:--:--')
+  await page.locator('body').click({ position: { x: 2, y: 2 } })
+
+  // A plain "3" jumps to the third query page (MISSIONS).
+  await page.keyboard.press('3')
+  await expect(page).toHaveURL(/\/missions$/)
+
+  // Back home, the browser's own tab-switch chord (Cmd/Ctrl+number) must pass
+  // through: the app does not hijack it, so the URL stays put.
+  await page.goto('/')
+  await expect(page.locator('.mu-clock')).not.toContainText('--:--:--')
+  await page.locator('body').click({ position: { x: 2, y: 2 } })
+  await page.keyboard.press('ControlOrMeta+1')
+  await page.keyboard.press('Control+1')
+  await page.keyboard.press('Meta+1')
+  await expect(page).toHaveURL(/\/$/)
+})
+
 test('query pages work without JavaScript (SSR + progressive enhancement)', async ({
   browser,
 }) => {

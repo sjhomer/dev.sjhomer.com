@@ -547,7 +547,11 @@ export function Console({
         return
       }
       const inPrompt = document.activeElement === inputRef.current
-      if (!inPrompt && /^[1-6]$/.test(e.key)) {
+      // A bare 1–6 is the menu shortcut, but only unmodified: Cmd/Ctrl+Number is
+      // the browser's tab switch and Alt+Number is an OS/browser shortcut too, so
+      // let those through untouched rather than preventDefault-ing them.
+      const plainKey = !e.metaKey && !e.ctrlKey && !e.altKey
+      if (!inPrompt && plainKey && /^[1-6]$/.test(e.key)) {
         // In egg mode the 1–6 keys drive the egg controls that now stand in for
         // the numbered menu; otherwise they select the matching query page.
         if (eggModeRef.current) {
