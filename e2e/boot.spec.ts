@@ -40,9 +40,7 @@ test('menu navigation reaches a query page with its own URL', async ({
     .click()
   await expect(page).toHaveURL(/\/missions$/)
   // The mission log now leads with the portfolio case study.
-  await expect(
-    page.getByText(/DEV\/SJHOMER\/COM/).first(),
-  ).toBeVisible()
+  await expect(page.getByText(/DEV\/SJHOMER\/COM/).first()).toBeVisible()
 })
 
 test('a bare number key selects a menu page but Cmd/Ctrl+number does not', async ({
