@@ -65,7 +65,7 @@ export function BootLanding(): React.ReactElement {
       <Typewriter
         as="h1"
         variant="display"
-        text="MU/TH/UR 6000"
+        text="DEV/SJHOMER/COM"
         className="mu-boot-banner"
       />
       <Staged className="mu-boot-bars" gap={0}>

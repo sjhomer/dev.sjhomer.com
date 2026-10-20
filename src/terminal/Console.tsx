@@ -851,7 +851,7 @@ export function Console({
             <div className="mu-console-id">
               <Link to="/" className="mu-console-home">
                 <PowerGlyph />
-                <span className="mu-console-home-text">MU/TH/UR 6000</span>
+                <span className="mu-console-home-text">DEV/SJHOMER/COM</span>
               </Link>
               <div className="mu-console-meta">
                 <ShipClock />

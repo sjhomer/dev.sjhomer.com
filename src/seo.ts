@@ -1,7 +1,7 @@
 /** Per-page metadata: title, description, Open Graph and Twitter tags. */
 
 const SITE = 'https://dev.sjhomer.com'
-const TITLE_SUFFIX = 'MU/TH/UR 6000 · S.J. Homer'
+const TITLE_SUFFIX = 'DEV/SJHOMER/COM'
 
 interface PageMeta {
   title: string

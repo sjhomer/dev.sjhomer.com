@@ -81,7 +81,7 @@ export function SoundGate({
       aria-labelledby="mu-sound-gate-title"
     >
       <div className="mu-sound-gate-panel" ref={panelRef}>
-        <p className="mu-sound-gate-kicker">MU/TH/UR 6000 · WELCOME</p>
+        <p className="mu-sound-gate-kicker">DEV/SJHOMER/COM · WELCOME</p>
         <h2 id="mu-sound-gate-title" className="mu-sound-gate-title">
           WELCOME ABOARD, OPERATOR
         </h2>

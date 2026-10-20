@@ -200,16 +200,25 @@ export function rollDice(arg: string): Roll {
 }
 
 export function rollLines({ sides, value }: Roll): Array<Line> {
+  const subtitle = sides === 20 && value === 1 ? 'CHECK THE AIRLOCK.' : sides === 20 && value === 20 ? 'IN THE PIPE, 5 BY 5; STAY FROSTY.' : undefined
   const flourish =
     sides === 20 && value === 20
       ? '  CRITICAL SUCCESS.'
       : sides === 20 && value === 1
-        ? '  CRITICAL FAILURE. CHECK THE AIRLOCK.'
+        ? '  CRITICAL FAILURE.'
         : ''
-  return [
+
+  const msgs = [
     { text: `ROLLING D${sides}...`, tone: 'dim', cps: CPS_LOG },
-    { text: String(value) + flourish, variant: 'display', cps: 30 },
-  ]
+    { text: String(value) + flourish, variant: 'display', tone:
+        sides === 20 && value === 1 ? 'alert' : '', cps: 30 }
+  ];
+
+  if(subtitle) {
+    msgs.push({ text: subtitle, tone: sides === 20 && value === 1 ? 'caution' : '', cps: CPS_LOG });
+  }
+
+  return msgs;
 }
 
 export function specialOrderLines(): Array<Line> {

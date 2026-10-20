@@ -50,7 +50,7 @@ const data: Array<Role> = [
     start: '2023-04',
     end: '2023-12',
     remote: true,
-    clearance: 'ACTIVE',
+    clearance: 'ARCHIVED',
     highlights: [
       {
         text: 'Led large-scale engineering initiatives, ensuring alignment with company objectives and industry standards.',
@@ -71,7 +71,7 @@ const data: Array<Role> = [
     start: '2022-06',
     end: '2023-04',
     remote: true,
-    clearance: 'ACTIVE',
+    clearance: 'ARCHIVED',
     highlights: [
       {
         text: 'Set the technical direction for competitive gaming platforms, balancing cutting-edge solutions with practical implementation strategies.',
