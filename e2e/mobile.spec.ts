@@ -92,9 +92,7 @@ test('tapping the picker opens the list and a command navigates', async ({
   await expect(page).toHaveURL(/\/missions$/)
 })
 
-test('the picker omits CV / ASK / DOWNLOAD and the log filters', async ({
-  page,
-}) => {
+test('the picker omits CV / DOWNLOAD and the log filters', async ({ page }) => {
   await seedSound(page, 'off')
   await page.goto('/')
   await waitForHydration(page)
@@ -107,6 +105,5 @@ test('the picker omits CV / ASK / DOWNLOAD and the log filters', async ({
     .locator('.mu-suggest-item:visible .mu-suggest-name')
     .allInnerTexts()
   expect(names).not.toContain('CV')
-  expect(names).not.toContain('ASK')
   expect(names).not.toContain('DOWNLOAD')
 })

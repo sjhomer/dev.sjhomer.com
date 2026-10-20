@@ -12,9 +12,7 @@ import type { Line } from '../components/muthur'
 import { MENU, complete, pageNav, resolvePath, suggest } from './queries'
 import type { Suggestion } from './queries'
 import {
-  askLines,
   debugLines,
-  helpLines,
   jonesyLines,
   rollDice,
   rollLines,
@@ -283,6 +281,34 @@ export function Console({
     }
   }, [])
 
+  // Replay the boot when the visitor navigates back to the home screen in-app
+  // (e.g. clicking the MU/TH/UR wordmark in the top nav). The initial load /
+  // refresh is handled by the mount effect above; this covers subsequent
+  // client-side navigations to '/', which would otherwise re-render the landing
+  // silently. Remounting via bootKey replays the typed sequence (and its key
+  // clacks); playBoot re-arms the cue. The first run is the initial mount, so it
+  // stands down (no double boot) and the mount effect owns that one.
+  const bootReplayArmed = useRef(false)
+  useEffect(() => {
+    if (!bootReplayArmed.current) {
+      bootReplayArmed.current = true
+      return
+    }
+    if (pathname !== '/') return
+    // The first-visit gate (no preference yet) owns the very first boot.
+    if (!audio.hasPreference()) return
+    setBootKey((k) => k + 1)
+    if (audio.getLevel() === 'off') return
+    if (autoplayLikely()) {
+      audio
+        .arm()
+        .then(() => audio.playBoot({ onBlocked: () => setShowResume(true) }))
+        .catch(() => setShowResume(true))
+    } else {
+      setShowResume(true)
+    }
+  }, [pathname])
+
   // Keep the player armed on sounded routes so key clacks survive a /cv
   // round-trip: a full load that lands on /cv skips the boot gate above, so the
   // player would otherwise stay null until a boot that never comes. arm() is
@@ -519,7 +545,11 @@ export function Console({
         return
       }
       const inPrompt = document.activeElement === inputRef.current
-      if (!inPrompt && /^[1-6]$/.test(e.key)) {
+      // A bare 1–6 is the menu shortcut, but only unmodified: Cmd/Ctrl+Number is
+      // the browser's tab switch and Alt+Number is an OS/browser shortcut too, so
+      // let those through untouched rather than preventDefault-ing them.
+      const plainKey = !e.metaKey && !e.ctrlKey && !e.altKey
+      if (!inPrompt && plainKey && /^[1-6]$/.test(e.key)) {
         // In egg mode the 1–6 keys drive the egg controls that now stand in for
         // the numbered menu; otherwise they select the matching query page.
         if (eggModeRef.current) {
@@ -586,6 +616,10 @@ export function Console({
   }
   function resumeSound() {
     setShowResume(false)
+    // On the landing page the typed boot sequence has already finished (and its
+    // clacks were dropped while autoplay was blocked), so remount it to replay
+    // the full boot — cue + typing — now that this click has unlocked audio.
+    if (pathname === '/') setBootKey((k) => k + 1)
     void audio.arm().then(() => audio.playBoot())
   }
   function cycleVolume() {
@@ -615,12 +649,6 @@ export function Console({
 
     if (cmd === 'CLEAR') {
       resetTerminal()
-      return true
-    }
-
-    if (cmd === 'HELP') {
-      setEggMode(true)
-      print(cmd, helpLines())
       return true
     }
 
@@ -659,11 +687,6 @@ export function Console({
         void audio.arm().then(() => audio.warning())
       }
       print(cmd, rollLines(roll))
-      return true
-    }
-    if (cmd.startsWith('ASK')) {
-      setEggMode(true)
-      print(cmd, askLines(cmd.slice(3).trim()))
       return true
     }
     if (cmd === 'SPECIAL ORDER 937') {

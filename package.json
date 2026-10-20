@@ -23,6 +23,7 @@
     "test:e2e": "playwright test",
     "generate:assets": "node scripts/generate-assets.mjs",
     "generate:sfx": "node scripts/make-sfx.mjs",
+    "generate:favicon": "node scripts/generate-favicon.mjs",
     "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
