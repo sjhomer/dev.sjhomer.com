@@ -25,7 +25,7 @@ test('first visit shows the welcome gate and entering enables sound', async ({
 
   await expect(dialog).toBeHidden()
   await expect(
-    page.getByRole('heading', { name: /MU\/TH\/UR 6000/ }),
+    page.getByRole('heading', { name: /DEV\/SJHOMER\/COM/ }),
   ).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem('mu-sound'))).toBe('on')
 })

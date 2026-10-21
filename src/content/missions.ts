@@ -10,7 +10,7 @@ import type { Mission } from './schema'
 const data: Array<Mission> = [
   {
     id: 'dev-sjhomer-portfolio',
-    title: 'dev.sjhomer.com — MU/TH/UR 6000 Portfolio',
+    title: 'dev.sjhomer.com Portfolio',
     era: 'Personal',
     brief:
       'A developer portfolio disguised as the MU/TH/UR 6000, the ship’s computer from Alien. Inspired by a lifelong love of science fiction and the retro-futurist terminals of the Alien franchise, you boot the mainframe and query the crew file — and every answer types back in cold green phosphor. The terminal is the navigation, with synced original sound effects, line-by-line type rendering, three palettes, and a trove of easter eggs. A fun, expressive experiment in showing a career as something you interrogate rather than scroll.',

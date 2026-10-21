@@ -21,7 +21,7 @@ export const Route = createRootRoute({
           'two decades of engineering leadership, printed line by line.',
       },
       { property: 'og:type', content: 'website' },
-      { property: 'og:site_name', content: 'MU/TH/UR 6000 · S.J. Homer' },
+      { property: 'og:site_name', content: 'DEV/SJHOMER/COM' },
       {
         property: 'og:image',
         content: 'https://dev.sjhomer.com/og/default.png',

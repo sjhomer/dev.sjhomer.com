@@ -413,7 +413,7 @@ export function GuideSection(): React.ReactElement {
         <p>
           A living document — it tracks the shipped site, not a fixed spec.{' '}
           <Link className="mu-link" to="/">
-            ◂ Return to MU/TH/UR
+            ◂ Return to DEV/SJHOMER/COM
           </Link>
         </p>
       </footer>

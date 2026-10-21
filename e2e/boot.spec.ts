@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
 test('boot landing renders with banner, menu and prompt', async ({ page }) => {
   await page.goto('/')
   await expect(
-    page.getByRole('heading', { name: /MU\/TH\/UR 6000/ }),
+    page.getByRole('heading', { name: /DEV\/SJHOMER\/COM/ }),
   ).toBeVisible()
   await expect(
     page.getByRole('link', { name: /Dossier/i }).first(),
@@ -40,9 +40,7 @@ test('menu navigation reaches a query page with its own URL', async ({
     .click()
   await expect(page).toHaveURL(/\/missions$/)
   // The mission log now leads with the portfolio case study.
-  await expect(
-    page.getByText(/MU\/TH\/UR 6000 Portfolio/).first(),
-  ).toBeVisible()
+  await expect(page.getByText(/DEV\/SJHOMER\/COM/).first()).toBeVisible()
 })
 
 test('a bare number key selects a menu page but Cmd/Ctrl+number does not', async ({
