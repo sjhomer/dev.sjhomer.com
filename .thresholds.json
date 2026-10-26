@@ -1,6 +1,6 @@
 {
   "workStateRepo": "~/.thresholds/state/github.com/sjhomer/dev.sjhomer.com",
   "workflow": {
-    "deploy": "multi"
+    "deploy": "none"
   }
 }
