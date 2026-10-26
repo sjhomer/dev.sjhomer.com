@@ -22,15 +22,48 @@ function prefersReduced(): boolean {
   }
 }
 
+// The phone breakpoint used elsewhere in the console ("on phones", console.css).
+const PHONE_QUERY = '(max-width: 640px)'
+
+/**
+ * True on phone-width viewports, kept in sync with the media query. Starts
+ * false so the first render matches the server HTML (SSR has no window) — the
+ * phone trim is applied in the effect after mount, avoiding a hydration
+ * mismatch. Same reason prefersReduced()/reducedMotion() read matchMedia only
+ * inside effects.
+ */
+function usePhone(): boolean {
+  const [phone, setPhone] = useState(false)
+  useEffect(() => {
+    try {
+      if (
+        typeof window === 'undefined' ||
+        typeof window.matchMedia !== 'function'
+      )
+        return undefined
+      const mql = window.matchMedia(PHONE_QUERY)
+      const onChange = () => setPhone(mql.matches)
+      setPhone(mql.matches)
+      mql.addEventListener('change', onChange)
+      return () => mql.removeEventListener('change', onChange)
+    } catch {
+      return undefined
+    }
+  }, [])
+  return phone
+}
+
 /**
  * A boot check bar that fills itself, then reports done so the next bar (or
  * line) can print. Marked as a Staged block so the sequencer waits for it.
  */
 function BootBar({
   label,
+  cells,
   onDone,
 }: {
   label: string
+  cells: number
   onDone?: () => void
 }): React.ReactElement {
   const [v, setV] = useState(1)
@@ -54,15 +87,18 @@ function BootBar({
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [])
-  // A shorter bar (14 cells, not the default 20) so the labelled checks don't
-  // run the full width of the screen — especially tight on phones.
-  return <ProgressBar label={label} value={v} cells={14} />
+  // A shorter bar than the default 20 so the labelled checks don't run the full
+  // width of the screen; the caller trims it further on phones (see BootLanding).
+  return <ProgressBar label={label} value={v} cells={cells} />
 }
 ;(BootBar as unknown as { __staged?: boolean }).__staged = true
 
 export function BootLanding(): React.ReactElement {
   // The landing boot keeps the louder typing level; typing on every other view
   // runs at the quieter default carried by TypingGain.
+  // Phones get ~25% shorter bars (10 cells vs 14) so the labelled checks fit the
+  // narrow viewport.
+  const cells = usePhone() ? 10 : 14
   return (
     <TypingGain.Provider value={KEY_GAIN}>
       <Staged className="mu-boot" gap={240}>
@@ -78,9 +114,9 @@ export function BootLanding(): React.ReactElement {
           className="mu-boot-banner"
         />
         <Staged className="mu-boot-bars" gap={0}>
-          <BootBar label="CORE SYSTEMS" />
-          <BootBar label="CREW MANIFEST" />
-          <BootBar label="PERSONNEL FILE" />
+          <BootBar label="CORE SYSTEMS" cells={cells} />
+          <BootBar label="CREW MANIFEST" cells={cells} />
+          <BootBar label="PERSONNEL FILE" cells={cells} />
         </Staged>
         <Typewriter
           text={`PERSONNEL FILE: HOMER, S.J.  CLEARANCE: ${profile.clearance}`}
